@@ -117,8 +117,14 @@ export class Start extends Phaser.Scene {
         // Create barriers
         this.createBarriers();
 
-        // Replace direct player creation with createPlayer
-        this.createPlayer();
+        // Create player as a physics sprite
+        this.player = this.physics.add.sprite(400, 550, 'ship');
+        this.player.setScale(0.15);
+        this.player.setCollideWorldBounds(true);
+        // Add player collider ONCE
+        this.enemyBulletPlayerCollider = this.physics.add.overlap(
+            this.enemyBullets, this.player, this.enemyBulletHitPlayer, null, this
+        );
 
         // Set up controls
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -489,35 +495,6 @@ export class Start extends Phaser.Scene {
         }
     }
 
-    removePlayerColliders() {
-        if (this.enemyBulletPlayerCollider) {
-            this.enemyBulletPlayerCollider.destroy();
-            this.enemyBulletPlayerCollider = null;
-        }
-    }
-
-    addPlayerColliders() {
-        this.enemyBulletPlayerCollider = this.physics.add.overlap(
-            this.enemyBullets, this.player, this.enemyBulletHitPlayer, null, this
-        );
-    }
-
-    createPlayer() {
-        // Remove old colliders
-        this.removePlayerColliders();
-        // If an old player exists, destroy it first
-        if (this.player) {
-            this.player.destroy();
-        }
-        // Create a fresh player sprite
-        this.player = this.physics.add.sprite(400, 550, 'ship');
-        this.player.setScale(0.15);
-        this.player.setCollideWorldBounds(true);
-        // Re-establish the collision detection
-        this.addPlayerColliders();
-        if (this.DEBUG) console.log("New player created");
-    }
-
     enemyBulletHitPlayer(bullet, player) {
         // Skip if bullet not active
         if (!bullet.active) return;
@@ -529,21 +506,22 @@ export class Start extends Phaser.Scene {
         this.lives--;
         this.updateLivesDisplay();
         console.log("Player hit! Lives remaining:", this.lives);
-        // If no more lives, game over
         if (this.lives <= 0) {
-            // Game over state
             this.gameOverText.setVisible(true);
             this.finalScoreText.setText(`Final Score: ${this.score}`).setVisible(true);
             this.restartText.setVisible(true);
-            // Clean up the player - IMPORTANT: Remove collider first
+            // Remove collider before destroying player
+            if (this.enemyBulletPlayerCollider) {
+                this.enemyBulletPlayerCollider.destroy();
+                this.enemyBulletPlayerCollider = null;
+            }
             if (this.player) {
                 this.player.destroy();
                 this.player = null;
             }
         } else {
-            // Just reset the player position - NO recreation
+            // Just reset the player position and briefly set alpha
             player.x = 400;
-            // Brief invulnerability
             player.alpha = 0.5;
             this.time.delayedCall(1000, () => {
                 if (player && player.active) {
