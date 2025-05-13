@@ -125,6 +125,17 @@ export class Start extends Phaser.Scene {
         this.player.setScale(0.15);
         this.player.setCollideWorldBounds(true);
 
+        // Log player position every second
+        this.time.addEvent({
+            delay: 1000, // 1 second
+            loop: true,
+            callback: () => {
+                if (this.player && this.player.active) {
+                    console.log(`Player position: x=${this.player.x}, y=${this.player.y}`);
+                }
+            }
+        });
+
         // Set up controls
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -516,27 +527,46 @@ export class Start extends Phaser.Scene {
     }
 
     enemyBulletHitPlayer(bullet, player) {
-        // Skip if bullet not active or player not active or game is over
-        if (!bullet.active || !player.active || this.gameOver) return;
+        // Skip if bullet not active or player not active or game is over or invincible
+        if (!bullet.active || !player.active || this.gameOver || this.playerInvincible) return;
+
+        // Make player invincible temporarily
+        this.playerInvincible = true;
+
         // Deactivate the bullet
         bullet.setActive(false);
         bullet.setVisible(false);
         bullet.destroy();
+
         // Reduce lives
         this.lives--;
         this.updateLivesDisplay();
-        if (this.DEBUG) console.log("Player hit! Lives remaining:", this.lives);
+
+        if (this.DEBUG) console.log("Player hit! Lives remaining:", this.lives, "Player position:", player.x, player.y);
+
         if (this.lives <= 0) {
             this.handleGameOver();
         } else {
-            // Just reset the player position and briefly set alpha
-            player.x = 400;
-            player.alpha = 0.5;
-            this.time.delayedCall(1000, () => {
-                if (player && player.active) {
+            // Flash the player to indicate damage
+            this.tweens.add({
+                targets: player,
+                alpha: 0.5,
+                duration: 100,
+                yoyo: true,
+                repeat: 5,
+                onComplete: () => {
+                    // Reset player alpha and remove invincibility
                     player.alpha = 1;
+                    this.playerInvincible = false;
+                    if (this.DEBUG) console.log("Player invincibility ended, position:", player.x, player.y);
                 }
             });
+
+            // Reset player position to center and stop all movement
+            player.x = 400;
+            player.y = 550;
+            if (player.setVelocity) player.setVelocity(0, 0);
+            if (player.body && player.body.setAllowGravity) player.body.setAllowGravity(false);
         }
     }
 
