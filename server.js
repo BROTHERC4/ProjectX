@@ -7,10 +7,24 @@ const { handlePlayerInput, startGameInRoom, endGameInRoom } = require('./gameSta
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
+const io = socketIO(server, {
+  cors: {
+    origin: '*', // Allow connections from any origin (for development)
+    methods: ['GET', 'POST']
+  },
+  pingTimeout: 30000,
+  pingInterval: 25000
+});
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// If index.html in the root directory, serve that too (for Railway)
+app.get('/', (req, res) => {
+  if (path.resolve(__dirname, 'index.html')) {
+    res.sendFile(path.resolve(__dirname, 'index.html'));
+  }
+});
 
 // Socket connection handling
 io.on('connection', (socket) => {
@@ -84,7 +98,12 @@ app.get('/api/rooms', (req, res) => {
   res.json(getAllRooms());
 });
 
+// Health check endpoint for Railway
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 }); 

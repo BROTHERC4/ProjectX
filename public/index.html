@@ -47,6 +47,22 @@
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
         }
+        .loading-message {
+            text-align: center;
+            max-width: 80%;
+            margin: 0 auto;
+        }
+        .retry-button {
+            background-color: #4a4aff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+        }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -57,7 +73,7 @@
     <div id="game-container">
         <div id="loading">
             <div class="spinner"></div>
-            <p>Loading game assets...</p>
+            <p class="loading-message">Loading game assets...</p>
         </div>
     </div>
 
@@ -79,18 +95,44 @@
         // Show loading screen until game is ready
         window.addEventListener('load', function() {
             const loading = document.getElementById('loading');
+            const loadingMessage = loading.querySelector('.loading-message');
             
             // Remove loading screen when Phaser has started
             document.addEventListener('phaser-ready', function() {
                 loading.style.display = 'none';
             });
             
+            // Check if Socket.io script loaded
+            if (typeof io === 'undefined') {
+                loadingMessage.innerHTML = 'Failed to connect to game server. Please check your connection and try again.';
+                addRetryButton(loading);
+                return;
+            }
+            
+            // Check if Phaser loaded
+            if (typeof Phaser === 'undefined') {
+                loadingMessage.innerHTML = 'Failed to load game engine. Please check your connection and try again.';
+                addRetryButton(loading);
+                return;
+            }
+            
             // Show error if loading takes too long
             setTimeout(function() {
                 if (loading.style.display !== 'none') {
-                    loading.innerHTML = '<p>Game loading is taking longer than expected. Please check your connection or refresh the page.</p>';
+                    loadingMessage.innerHTML = 'Game loading is taking longer than expected. Please check your connection or refresh the page.';
+                    addRetryButton(loading);
                 }
             }, 10000);
+            
+            function addRetryButton(container) {
+                const button = document.createElement('button');
+                button.className = 'retry-button';
+                button.innerText = 'Retry';
+                button.onclick = function() {
+                    window.location.reload();
+                };
+                container.appendChild(button);
+            }
         });
     </script>
 </body>

@@ -3,8 +3,14 @@
  */
 class SocketClient {
   constructor() {
-    // Connect to the Socket.io server
-    this.socket = io();
+    // Connect to the Socket.io server with connection options for Railway
+    // Use the window.location to dynamically determine host for different environments
+    this.socket = io({
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 10000,
+      transports: ['websocket', 'polling'] // Try websocket first, fall back to polling
+    });
     
     // Player and room info
     this.playerId = null;
@@ -42,6 +48,13 @@ class SocketClient {
     
     this.socket.on('disconnect', () => {
       console.log('Disconnected from server');
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      if (this.onError) {
+        this.onError('Connection error. Please refresh the page.');
+      }
     });
     
     // Room events
