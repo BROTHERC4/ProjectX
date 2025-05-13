@@ -584,7 +584,7 @@ export class Start extends Phaser.Scene {
         } else {
             try {
                 // Clear ALL enemy bullets for safety
-                this.clearAllEnemyBullets();
+                this.clearEnemyBulletsNearPlayer();
                 
                 // Force player to be visible and active
                 player.setActive(true);
@@ -733,9 +733,7 @@ export class Start extends Phaser.Scene {
     }
 
     clearEnemyBulletsNearPlayer() {
-        if (!this.player || !this.player.active) return;
         
-        // Clear ALL enemy bullets when player is recovering/respawning for safety
         this.enemyBullets.children.each(bullet => {
             if (bullet.active) {
                 const distToPlayer = Phaser.Math.Distance.Between(
@@ -752,17 +750,5 @@ export class Start extends Phaser.Scene {
                 }
             }
         });
-    }
-
-    clearAllEnemyBullets() {
-        // Clear ALL enemy bullets for a clean slate
-        this.enemyBullets.children.each(bullet => {
-            if (bullet.active) {
-                bullet.setActive(false);
-                bullet.setVisible(false);
-                bullet.destroy();
-            }
-        });
-        if (this.DEBUG) console.log("Cleared all enemy bullets");
     }
 }
