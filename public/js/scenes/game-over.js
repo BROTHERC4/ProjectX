@@ -16,6 +16,15 @@ class GameOverScene extends Phaser.Scene {
   }
 
   preload() {
+    // Set up loading error handler
+    this.load.on('loaderror', (fileObj) => {
+      if (typeof debugLog !== 'undefined') {
+        debugLog('Error loading asset in GameOverScene: ' + fileObj.src);
+      }
+      console.error('Error loading asset:', fileObj.src);
+      this.scene.start('MenuScene', { error: `Failed to load game asset: ${fileObj.key}` });
+    });
+    
     this.load.image('background', 'assets/space.png');
   }
 
@@ -25,8 +34,8 @@ class GameOverScene extends Phaser.Scene {
     
     // Game over title
     this.add.text(400, 100, 'GAME OVER', {
-      fontFamily: 'Arial',
-      fontSize: 64,
+      fontFamily: '"Press Start 2P", cursive',
+      fontSize: 48,
       color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 6,
@@ -42,14 +51,14 @@ class GameOverScene extends Phaser.Scene {
     }
     
     this.add.text(400, 180, winnerText, {
-      fontFamily: 'Arial',
+      fontFamily: '"Orbitron", sans-serif',
       fontSize: 32,
       color: '#ffff00'
     }).setOrigin(0.5);
     
     // Final scores heading
     this.add.text(400, 240, 'Final Scores', {
-      fontFamily: 'Arial',
+      fontFamily: '"Orbitron", sans-serif',
       fontSize: 28,
       color: '#ffffff'
     }).setOrigin(0.5);
@@ -62,7 +71,7 @@ class GameOverScene extends Phaser.Scene {
       const color = player.id === this.playerId ? '#ffff00' : '#ffffff';
       
       this.add.text(400, yPos, `${index + 1}. ${player.name}: ${player.score}`, {
-        fontFamily: 'Arial',
+        fontFamily: '"Roboto", sans-serif',
         fontSize: 24,
         color: color
       }).setOrigin(0.5);
@@ -70,8 +79,8 @@ class GameOverScene extends Phaser.Scene {
     
     // Create buttons
     const buttonStyle = {
-      fontFamily: 'Arial',
-      fontSize: 24,
+      fontFamily: '"Press Start 2P", cursive',
+      fontSize: 20,
       color: '#ffffff',
       backgroundColor: '#222266',
       padding: { left: 20, right: 20, top: 10, bottom: 10 }

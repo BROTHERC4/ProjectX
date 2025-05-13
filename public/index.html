@@ -213,5 +213,16 @@
             }
         });
     </script>
+
+    <!-- Also add a direct way to hide the loading screen from game.js -->
+    <script>
+        window.hideLoadingScreen = function() {
+            debugLog('hideLoadingScreen called directly');
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl) {
+                loadingEl.style.display = 'none';
+            }
+        };
+    </script>
 </body>
 </html> 

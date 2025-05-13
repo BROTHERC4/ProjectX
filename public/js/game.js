@@ -44,6 +44,12 @@ window.addEventListener('DOMContentLoaded', function() {
     // Dispatch event to hide loading screen
     if (typeof debugLog !== 'undefined') debugLog('Dispatching phaser-ready event...');
     document.dispatchEvent(new Event('phaser-ready'));
+
+    // Also use the direct method to hide the loading screen
+    if (typeof window.hideLoadingScreen === 'function') {
+      if (typeof debugLog !== 'undefined') debugLog('Calling hideLoadingScreen directly...');
+      setTimeout(window.hideLoadingScreen, 500); // Small delay to ensure it happens after initialization
+    }
   } catch (error) {
     if (typeof debugLog !== 'undefined') {
       debugLog('ERROR initializing game: ' + error.message);
