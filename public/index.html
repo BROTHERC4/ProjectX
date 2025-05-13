@@ -96,10 +96,12 @@
         window.addEventListener('load', function() {
             const loading = document.getElementById('loading');
             const loadingMessage = loading.querySelector('.loading-message');
+            console.log("Loading screen is visible");
             
             // Remove loading screen when Phaser has started
             document.addEventListener('phaser-ready', function() {
                 loading.style.display = 'none';
+                console.log("Phaser is Ready");
             });
             
             // Check if Socket.io script loaded
