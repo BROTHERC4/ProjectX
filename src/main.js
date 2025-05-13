@@ -2,13 +2,20 @@ import { Start } from './scenes/Start.js';
 
 const config = {
     type: Phaser.AUTO,
-    title: 'Overlord Rising',
-    description: '',
+    title: 'ProjectX',
+    description: 'A retro-style space shooter',
     parent: 'game-container',
-    width: 1280,
-    height: 720,
+    width: 800,
+    height: 600,
     backgroundColor: '#000000',
-    pixelArt: false,
+    pixelArt: true,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: false
+        }
+    },
     scene: [
         Start
     ],
