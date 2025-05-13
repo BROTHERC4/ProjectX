@@ -610,7 +610,7 @@ export class Start extends Phaser.Scene {
                     alpha: 0.4,
                     duration: 200,
                     yoyo: true,
-                    repeat: 5,
+                    repeat: 3,
                     onComplete: () => {
                         if (player && player.active) {
                             player.alpha = 1;
@@ -669,7 +669,7 @@ export class Start extends Phaser.Scene {
             alpha: 0.4,
             duration: 200,
             yoyo: true,
-            repeat: 5,
+            repeat: 3,
             onComplete: () => {
                 if (this.player && this.player.active) {
                     this.player.alpha = 1;
