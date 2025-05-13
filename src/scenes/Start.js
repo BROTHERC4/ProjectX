@@ -540,28 +540,29 @@ export class Start extends Phaser.Scene {
     enemyBulletHitPlayer(bullet, player) {
         // Check for invincibility first
         if (!bullet.active || !player.active || this.gameOver || this.playerInvincible) return;
-        
+
         // Set player as invincible
         this.playerInvincible = true;
-        
+
         // Deactivate the bullet
         bullet.setActive(false);
         bullet.setVisible(false);
         bullet.destroy();
-        
+
         // Reduce lives
         this.lives--;
         this.updateLivesDisplay();
         if (this.DEBUG) console.log("Player hit! Lives remaining:", this.lives, "Player position:", player.x, player.y);
-        
+
         if (this.lives <= 0) {
             this.handleGameOver();
         } else {
-            // Reset player position but maintain Y coordinate
-            const originalY = player.y;
+            // Reset player position and velocity
             player.x = 400;
-            player.y = originalY; // Preserve Y position
-            
+            player.y = 550;
+            if (player.setVelocity) player.setVelocity(0, 0);
+            if (player.body && player.body.setAllowGravity) player.body.setAllowGravity(false);
+
             // Visual feedback for invincibility
             this.tweens.add({
                 targets: player,
