@@ -6,8 +6,7 @@ export class Start extends Phaser.Scene {
 
     preload() {
         this.load.image('background', 'assets/space.png');
-        this.load.image('logo', 'assets/phaser.png');
-
+        
         //  The ship sprite is CC0 from https://ansimuz.itch.io - check out his other work!
         this.load.spritesheet('ship', 'assets/spaceship.png', { frameWidth: 176, frameHeight: 96 });
 
@@ -22,9 +21,8 @@ export class Start extends Phaser.Scene {
     create() {
         this.background = this.add.tileSprite(400, 300, 800, 600, 'background');
 
-        const logo = this.add.image(640, 200, 'logo');
-
-        this.player = this.add.sprite(400, 500, 'ship');
+        // Create player as a physics sprite
+        this.player = this.physics.add.sprite(400, 500, 'ship');
         this.player.setScale(0.5);
         this.player.setCollideWorldBounds(true);
 
@@ -48,15 +46,6 @@ export class Start extends Phaser.Scene {
 
         this.lastFired = 0;
         this.fireRate = 200;
-
-        this.tweens.add({
-            targets: logo,
-            y: 400,
-            duration: 1500,
-            ease: 'Sine.inOut',
-            yoyo: true,
-            loop: -1
-        });
     }
 
     update(time, delta) {
