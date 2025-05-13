@@ -1,4 +1,5 @@
 import { Start } from './scenes/Start.js';
+import { MenuScene } from './scenes/MenuScene.js';
 
 const config = {
     type: Phaser.AUTO,
@@ -17,6 +18,7 @@ const config = {
         }
     },
     scene: [
+        MenuScene,
         Start
     ],
     scale: {
