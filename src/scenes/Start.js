@@ -496,7 +496,7 @@ export class Start extends Phaser.Scene {
         // Skip if bullet not active or player invincible
         if (!bullet.active || this.playerInvincible) return;
         
-        if (this.DEBUG) console.log("Player hit! Lives before:", this.lives);
+        console.log("Player hit! Lives before:", this.lives);
         
         // Immediately deactivate bullet
         bullet.setActive(false);
@@ -510,38 +510,60 @@ export class Start extends Phaser.Scene {
         this.lives--;
         this.updateLivesDisplay();
         
-        if (this.DEBUG) console.log("Lives after hit:", this.lives);
+        console.log("Lives after hit:", this.lives);
         
-        // Use delayedCall for short flashing animation
+        // Check if game over
+        if (this.lives <= 0) {
+            // Show game over state
+            this.gameOverText.setVisible(true);
+            this.finalScoreText.setText(`Final Score: ${this.score}`).setVisible(true);
+            this.restartText.setVisible(true);
+            
+            // Destroy player
+            if (this.player) {
+                this.player.destroy();
+                this.player = null;
+            }
+            return;
+        }
+        
+        // Create a shield/flash effect overlay INSTEAD of changing player alpha
+        const flashEffect = this.add.sprite(player.x, player.y, 'ship');
+        flashEffect.setScale(0.15);
+        flashEffect.setTint(0xff0000); // Red tint for hit effect
+        
+        // Flash the effect sprite instead of the player
         let flashCount = 0;
-        const flashPlayer = () => {
-            // Toggle visibility
-            player.setAlpha(player.alpha === 1 ? 0.3 : 1);
+        const flashInterval = setInterval(() => {
+            flashEffect.setVisible(!flashEffect.visible);
             flashCount++;
             
-            if (flashCount < 10) {
-                // Continue flashing
-                this.time.delayedCall(100, flashPlayer);
-            } else {
-                // End of flashing sequence
-                player.setAlpha(1);
+            // Follow player position
+            if (this.player && this.player.active) {
+                flashEffect.x = this.player.x;
+                flashEffect.y = this.player.y;
+            }
+            
+            if (flashCount >= 10) {
+                clearInterval(flashInterval);
+                flashEffect.destroy();
                 
-                // Check if game over
-                if (this.lives <= 0) {
-                    this.handleGameOver();
-                } else {
-                    // Reposition player and end invincibility after delay
-                    player.x = 400;
+                // Only reposition player without messing with its properties
+                if (this.player && this.player.active) {
+                    this.player.x = 400;
+                    
+                    // End invincibility after a short delay
                     this.time.delayedCall(500, () => {
                         this.playerInvincible = false;
-                        if (this.DEBUG) console.log("Player invincibility ended");
+                        console.log("Player invincibility ended");
                     });
                 }
             }
-        };
+        }, 100);
         
-        // Start flashing
-        flashPlayer();
+        // Force-ensure player is visible and active (don't touch alpha)
+        player.setVisible(true);
+        player.setActive(true);
     }
 
     handleGameOver() {
