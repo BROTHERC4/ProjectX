@@ -496,6 +496,7 @@ export class Start extends Phaser.Scene {
         
         // Set invincibility
         this.playerInvincible = true;
+        player.body.enable = false; // Disable physics body immediately
         
         // Deactivate the bullet immediately
         bullet.setActive(false);
@@ -530,6 +531,7 @@ export class Start extends Phaser.Scene {
                     player.x = 400;
                     player.alpha = 1;
                     this.playerInvincible = false;
+                    player.body.enable = true; // Re-enable physics body
                 }
             }
         });
