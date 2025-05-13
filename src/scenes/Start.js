@@ -262,7 +262,11 @@ export class Start extends Phaser.Scene {
                 if (this.player.body) {
                     this.player.body.enable = true;
                 }
-                if (this.DEBUG) console.log("RECOVERED PLAYER");
+                
+                // Safety: Clear any enemy bullets near the player when recovered
+                this.clearEnemyBulletsNearPlayer();
+                
+                if (this.DEBUG) console.log("RECOVERED PLAYER - Position:", this.player.x, this.player.y);
             }
             
             // Player movement - only if player has a body
@@ -468,6 +472,9 @@ export class Start extends Phaser.Scene {
     }
     
     enemyShoot(enemy) {
+        // Skip shooting if player is invincible
+        if (this.playerInvincible) return;
+        
         const bullet = this.enemyBullets.get(enemy.x, enemy.y + 20);
         if (bullet) {
             // Check if bullet is spawning too close to the player
@@ -478,7 +485,8 @@ export class Start extends Phaser.Scene {
                 );
                 
                 // If bullet is too close to player (especially during invincibility), destroy it
-                if (distToPlayer < 50 || this.playerInvincible) {
+                // Increased safe distance to 100 pixels
+                if (distToPlayer < 100) {
                     bullet.setActive(false);
                     bullet.setVisible(false);
                     return;
@@ -574,14 +582,19 @@ export class Start extends Phaser.Scene {
         if (this.lives <= 0) {
             this.handleGameOver();
         } else {
-            // Store original position and velocity
-            const originalY = player.y;
-            const originalVelocityX = player.body ? player.body.velocity.x : 0;
-            const originalVelocityY = player.body ? player.body.velocity.y : 0;
+            // Clear ALL enemy bullets for safety
+            this.clearAllEnemyBullets();
             
-            // Reset position but keep Y
+            // Force player to be visible and active
+            player.setActive(true);
+            player.setVisible(true);
+            
+            // Force the player to use the normal ship texture (in case it's using a damaged texture)
+            player.setTexture('ship');
+            
+            // Reset position to a safe location
             player.x = 400;
-            player.y = originalY;
+            player.y = 550; // Always use a fixed Y for safety
             
             // Important: Make sure physics body is still enabled
             if (player.body) {
@@ -661,5 +674,39 @@ export class Start extends Phaser.Scene {
         this.time.delayedCall(1000, () => {
             emitter.destroy();
         });
+    }
+
+    clearEnemyBulletsNearPlayer() {
+        if (!this.player || !this.player.active) return;
+        
+        // Clear ALL enemy bullets when player is recovering/respawning for safety
+        this.enemyBullets.children.each(bullet => {
+            if (bullet.active) {
+                const distToPlayer = Phaser.Math.Distance.Between(
+                    bullet.x, bullet.y, 
+                    this.player.x, this.player.y
+                );
+                
+                // Clear bullets that are within 100 pixels of the player
+                if (distToPlayer < 50) {
+                    bullet.setActive(false);
+                    bullet.setVisible(false);
+                    bullet.destroy();
+                    if (this.DEBUG) console.log("Cleared enemy bullet near player");
+                }
+            }
+        });
+    }
+
+    clearAllEnemyBullets() {
+        // Clear ALL enemy bullets for a clean slate
+        this.enemyBullets.children.each(bullet => {
+            if (bullet.active) {
+                bullet.setActive(false);
+                bullet.setVisible(false);
+                bullet.destroy();
+            }
+        });
+        if (this.DEBUG) console.log("Cleared all enemy bullets");
     }
 }
