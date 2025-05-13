@@ -269,6 +269,17 @@ export class Start extends Phaser.Scene {
                 this.fireBullet();
                 this.lastFired = time + this.fireRate;
             }
+
+            // Improved player state debug log
+            if (this.DEBUG) {
+                console.log("Player state:", {
+                    x: this.player.x,
+                    y: this.player.y,
+                    active: this.player.active,
+                    visible: this.player.visible,
+                    invincible: this.playerInvincible
+                });
+            }
         }
 
         // Clean up bullets that are out of bounds
@@ -527,46 +538,45 @@ export class Start extends Phaser.Scene {
     }
 
     enemyBulletHitPlayer(bullet, player) {
-        // Skip if bullet not active or player not active or game is over or invincible
+        // Check for invincibility first
         if (!bullet.active || !player.active || this.gameOver || this.playerInvincible) return;
-
-        // Make player invincible temporarily
+        
+        // Set player as invincible
         this.playerInvincible = true;
-
+        
         // Deactivate the bullet
         bullet.setActive(false);
         bullet.setVisible(false);
         bullet.destroy();
-
+        
         // Reduce lives
         this.lives--;
         this.updateLivesDisplay();
-
         if (this.DEBUG) console.log("Player hit! Lives remaining:", this.lives, "Player position:", player.x, player.y);
-
+        
         if (this.lives <= 0) {
             this.handleGameOver();
         } else {
-            // Flash the player to indicate damage
+            // Reset player position but maintain Y coordinate
+            const originalY = player.y;
+            player.x = 400;
+            player.y = originalY; // Preserve Y position
+            
+            // Visual feedback for invincibility
             this.tweens.add({
                 targets: player,
                 alpha: 0.5,
-                duration: 100,
+                duration: 200,
                 yoyo: true,
-                repeat: 5,
+                repeat: 4,
                 onComplete: () => {
-                    // Reset player alpha and remove invincibility
-                    player.alpha = 1;
-                    this.playerInvincible = false;
-                    if (this.DEBUG) console.log("Player invincibility ended, position:", player.x, player.y);
+                    if (player && player.active) {
+                        player.alpha = 1;
+                        this.playerInvincible = false;
+                        if (this.DEBUG) console.log("Player invincibility ended, position:", player.x, player.y);
+                    }
                 }
             });
-
-            // Reset player position to center and stop all movement
-            player.x = 400;
-            player.y = 550;
-            if (player.setVelocity) player.setVelocity(0, 0);
-            if (player.body && player.body.setAllowGravity) player.body.setAllowGravity(false);
         }
     }
 
