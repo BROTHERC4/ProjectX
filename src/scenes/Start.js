@@ -150,10 +150,10 @@ export class Start extends Phaser.Scene {
         this.createEnemies();
 
         // Add collisions
-        this.physics.add.collider(this.bullets, this.barrierPieces, this.bulletHitBarrier, null, this);
-        this.physics.add.collider(this.enemyBullets, this.barrierPieces, this.bulletHitBarrier, null, this);
-        this.physics.add.overlap(this.bullets, this.enemies, this.bulletHitEnemy, null, this);
-        this.physics.add.overlap(this.enemyBullets, this.player, this.enemyBulletHitPlayer, null, this);
+        this.playerBulletCollider = this.physics.add.collider(this.bullets, this.barrierPieces, this.bulletHitBarrier, null, this);
+        this.enemyBulletBarrierCollider = this.physics.add.collider(this.enemyBullets, this.barrierPieces, this.bulletHitBarrier, null, this);
+        this.bulletEnemyCollider = this.physics.add.overlap(this.bullets, this.enemies, this.bulletHitEnemy, null, this);
+        this.enemyBulletPlayerCollider = this.physics.add.overlap(this.enemyBullets, this.player, this.enemyBulletHitPlayer, null, this);
 
         // Set up timing variables for game logic
         this.lastFired = 0;
@@ -515,20 +515,30 @@ export class Start extends Phaser.Scene {
         this.lives--;
         this.updateLivesDisplay();
         console.log("Player hit! Lives remaining:", this.lives);
-        // Check if game over
+        // If no more lives, game over
         if (this.lives <= 0) {
-            // Show game over state
+            // Game over state
             this.gameOverText.setVisible(true);
             this.finalScoreText.setText(`Final Score: ${this.score}`).setVisible(true);
             this.restartText.setVisible(true);
-            // Destroy player
-            this.player.destroy();
-            this.player = null;
+            // Clean up the player - IMPORTANT: Remove collider first
+            if (this.enemyBulletPlayerCollider) {
+                this.enemyBulletPlayerCollider.destroy();
+                this.enemyBulletPlayerCollider = null;
+            }
+            if (this.player) {
+                this.player.destroy();
+                this.player = null;
+            }
         } else {
-            // Simply recreate the player - this is the key fix
-            // Give a very short delay to avoid collision issues
-            this.time.delayedCall(50, () => {
-                this.createPlayer();
+            // Just reset the player position - NO recreation
+            player.x = 400;
+            // Brief invulnerability
+            player.alpha = 0.5;
+            this.time.delayedCall(1000, () => {
+                if (player && player.active) {
+                    player.alpha = 1;
+                }
             });
         }
     }
