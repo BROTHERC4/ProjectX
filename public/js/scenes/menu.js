@@ -179,7 +179,6 @@ class MenuScene extends Phaser.Scene {
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.style = `
-      position: absolute;
       width: 200px;
       padding: 8px;
       border: 2px solid #3333aa;
@@ -269,7 +268,6 @@ class MenuScene extends Phaser.Scene {
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.style = `
-      position: absolute;
       width: 200px;
       padding: 8px;
       border: 2px solid #3333aa;
@@ -297,7 +295,6 @@ class MenuScene extends Phaser.Scene {
     roomInput.type = 'text';
     roomInput.maxLength = 6;
     roomInput.style = `
-      position: absolute;
       width: 200px;
       padding: 8px;
       border: 2px solid #3333aa;
