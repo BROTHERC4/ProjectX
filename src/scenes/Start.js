@@ -471,22 +471,22 @@ export class Start extends Phaser.Scene {
     }
     
     createExplosion(x, y) {
-        // Use the new Phaser 3.60+ particle API
-        const manager = this.add.particles('barrier-piece');
-        const emitter = manager.createEmitter({
-            x: x,
-            y: y,
+        // New Phaser 3.60+ particle API
+        const emitter = this.add.particles(x, y, 'barrier-piece', {
             speed: { min: -100, max: 100 },
             angle: { min: 0, max: 360 },
             scale: { start: 1, end: 0 },
             blendMode: 'ADD',
             lifespan: 500,
             gravityY: 300,
-            quantity: 15
+            quantity: 15,
+            emitting: false // Don't continuously emit
         });
-        emitter.explode(15, x, y);
+        // Emit all particles at once for explosion effect
+        emitter.explode(15);
+        // Clean up after animation completes
         this.time.delayedCall(1000, () => {
-            manager.destroy();
+            emitter.destroy();
         });
     }
 }
