@@ -1,4 +1,4 @@
-export class SinglePlayerStart extends Phaser.Scene {
+class SinglePlayerStart extends Phaser.Scene {
 
     constructor() {
         super('SinglePlayerStart');
@@ -753,3 +753,4 @@ export class SinglePlayerStart extends Phaser.Scene {
         });
     }
 }
+window.SinglePlayerStart = SinglePlayerStart;

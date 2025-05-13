@@ -35,4 +35,5 @@ class SinglePlayerGameOver extends Phaser.Scene {
             this.scene.start('SinglePlayerStart');
         });
     }
-} 
+}
+window.SinglePlayerGameOver = SinglePlayerGameOver; 
