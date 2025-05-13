@@ -2,6 +2,7 @@ export class Start extends Phaser.Scene {
 
     constructor() {
         super('Start');
+        this.DEBUG = true; // Set to false in production
     }
 
     preload() {
@@ -223,8 +224,8 @@ export class Start extends Phaser.Scene {
         // Background scrolling
         this.background.tilePositionY -= 0.5;
 
-        // Only update player if game is not over
-        if (this.player && this.player.active) {
+        // Check if player exists and is active and game is not over
+        if (this.player && this.player.active && !this.gameOverText.visible) {
             // Player movement
             if (this.cursors.left.isDown) {
                 this.player.setVelocityX(-this.playerSpeed);
@@ -492,63 +493,82 @@ export class Start extends Phaser.Scene {
     }
 
     enemyBulletHitPlayer(bullet, player) {
-        // If bullet is inactive or player is invincible, ignore collision
+        // Skip if bullet not active or player invincible
         if (!bullet.active || this.playerInvincible) return;
         
-        // Make player invincible to prevent multiple hits
-        this.playerInvincible = true;
+        if (this.DEBUG) console.log("Player hit! Lives before:", this.lives);
         
-        // Handle the bullet
+        // Immediately deactivate bullet
         bullet.setActive(false);
         bullet.setVisible(false);
         bullet.destroy();
         
-        // Reduce player lives
+        // Activate invincibility state
+        this.playerInvincible = true;
+        
+        // Reduce lives
         this.lives--;
         this.updateLivesDisplay();
         
-        // If no lives left, handle game over
-        if (this.lives <= 0) {
-            // Show game over state
-            this.gameOverText.setVisible(true);
-            this.finalScoreText.setText(`Final Score: ${this.score}`).setVisible(true);
-            this.restartText.setVisible(true);
+        if (this.DEBUG) console.log("Lives after hit:", this.lives);
+        
+        // Use delayedCall for short flashing animation
+        let flashCount = 0;
+        const flashPlayer = () => {
+            // Toggle visibility
+            player.setAlpha(player.alpha === 1 ? 0.3 : 1);
+            flashCount++;
             
-            // Destroy player
-            player.destroy();
-            this.player = null;
-            return; // Exit early - no need to run animation for dead player
+            if (flashCount < 10) {
+                // Continue flashing
+                this.time.delayedCall(100, flashPlayer);
+            } else {
+                // End of flashing sequence
+                player.setAlpha(1);
+                
+                // Check if game over
+                if (this.lives <= 0) {
+                    this.handleGameOver();
+                } else {
+                    // Reposition player and end invincibility after delay
+                    player.x = 400;
+                    this.time.delayedCall(500, () => {
+                        this.playerInvincible = false;
+                        if (this.DEBUG) console.log("Player invincibility ended");
+                    });
+                }
+            }
+        };
+        
+        // Start flashing
+        flashPlayer();
+    }
+
+    handleGameOver() {
+        if (this.DEBUG) console.log("GAME OVER");
+        
+        // Show game over UI
+        this.gameOverText.setVisible(true);
+        this.finalScoreText.setText(`Final Score: ${this.score}`).setVisible(true);
+        this.restartText.setVisible(true);
+        
+        // Disable collision detection with player
+        if (this.player) {
+            this.physics.world.colliders.getActive()
+                .filter(collider => collider.object1 === this.player || collider.object2 === this.player)
+                .forEach(collider => collider.active = false);
+            
+            // Make the player fade out
+            this.tweens.add({
+                targets: this.player,
+                alpha: 0,
+                duration: 1000,
+                onComplete: () => {
+                    this.player.destroy();
+                    this.player = null;
+                }
+            });
         }
-        
-        // Handle hit animation for player with remaining lives
-        // 1. Keep body enabled but temporarily stop player movement
-        const currentVelocity = player.body.velocity.clone();
-        player.setVelocity(0, 0);
-        
-        // 2. Flash the player (without disabling physics)
-        this.tweens.add({
-            targets: player,
-            alpha: 0.2,
-            duration: 100,
-            yoyo: true,
-            repeat: 5,
-            onComplete: () => {
-                // Reset player state after animation
-                player.alpha = 1;
-                player.x = 400; // Reset position
-                this.playerInvincible = false;
-            }
-        });
-        
-        // 3. Add a short delay before re-enabling player control to prevent immediate second hit
-        this.time.delayedCall(1000, () => {
-            // Make absolutely sure the player is fully restored if it still exists
-            if (this.player && this.player.active) {
-                this.player.setActive(true);
-                this.player.setVisible(true);
-                this.player.alpha = 1;
-            }
-        });
     }
     
     createExplosion(x, y) {
