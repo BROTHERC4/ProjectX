@@ -6,6 +6,7 @@ export class Start extends Phaser.Scene {
 
     preload() {
         this.load.image('background', 'assets/space.png');
+        this.load.image('heart', 'assets/heart.png');
         
         // Load the spaceship as a regular image, not a spritesheet
         this.load.image('ship', 'assets/spaceship.png');
@@ -71,12 +72,42 @@ export class Start extends Phaser.Scene {
         
         this.background = this.add.tileSprite(400, 300, 800, 600, 'background');
 
-        // Initialize score
+        // Initialize score and lives
         this.score = 0;
+        this.lives = 3;
         this.scoreText = this.add.text(16, 16, 'Score: 0', { 
             fontSize: '24px', 
             fill: '#fff',
             fontFamily: 'Arial'
+        });
+
+        // Create lives display
+        this.livesGroup = this.add.group();
+        this.updateLivesDisplay();
+
+        // Create game over text (initially hidden)
+        this.gameOverText = this.add.text(400, 200, 'GAME OVER', {
+            fontSize: '64px',
+            fill: '#fff',
+            fontFamily: 'Arial'
+        }).setOrigin(0.5).setVisible(false);
+
+        this.finalScoreText = this.add.text(400, 300, '', {
+            fontSize: '32px',
+            fill: '#fff',
+            fontFamily: 'Arial'
+        }).setOrigin(0.5).setVisible(false);
+
+        this.restartText = this.add.text(400, 400, 'Click to Restart', {
+            fontSize: '24px',
+            fill: '#fff',
+            fontFamily: 'Arial'
+        }).setOrigin(0.5).setVisible(false);
+
+        // Make restart text interactive
+        this.restartText.setInteractive();
+        this.restartText.on('pointerdown', () => {
+            this.scene.restart();
         });
 
         // Create barriers
@@ -189,19 +220,22 @@ export class Start extends Phaser.Scene {
         // Background scrolling
         this.background.tilePositionY -= 0.5;
 
-        // Player movement
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-this.playerSpeed);
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(this.playerSpeed);
-        } else {
-            this.player.setVelocityX(0);
-        }
+        // Only update player if game is not over
+        if (this.player && this.player.active) {
+            // Player movement
+            if (this.cursors.left.isDown) {
+                this.player.setVelocityX(-this.playerSpeed);
+            } else if (this.cursors.right.isDown) {
+                this.player.setVelocityX(this.playerSpeed);
+            } else {
+                this.player.setVelocityX(0);
+            }
 
-        // Player shooting
-        if (this.fireKey.isDown && time > this.lastFired) {
-            this.fireBullet();
-            this.lastFired = time + this.fireRate;
+            // Player shooting
+            if (this.fireKey.isDown && time > this.lastFired) {
+                this.fireBullet();
+                this.lastFired = time + this.fireRate;
+            }
         }
 
         // Clean up bullets that are out of bounds
@@ -358,7 +392,7 @@ export class Start extends Phaser.Scene {
             this.enemyDirection *= -1;
             this.enemies.children.entries.forEach(enemy => {
                 if (!enemy.active) return;
-                enemy.y += 20;
+                enemy.y += 5;
             });
         }
         this.enemies.children.entries.forEach(enemy => {
@@ -369,27 +403,18 @@ export class Start extends Phaser.Scene {
                     enemy.moveTimer += delta;
                     enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 300) * 15;
                     // Only wasps (zigzag) can shoot
-                    if (!enemy.lastShotTime || time - enemy.lastShotTime > 1250) { // 25% slower
-                        if (Phaser.Math.Between(0, 5000) < 5 * delta) {
+                    if (!enemy.lastShotTime || time - enemy.lastShotTime > 1800) { // Reduced shooting frequency
+                        if (Phaser.Math.Between(0, 9500) < 5 * delta) { // Reduced chance to shoot
                             this.enemyShoot(enemy);
                             enemy.lastShotTime = time;
                         }
                     }
                     break;
                 case 'sineWave':
-                    enemy.moveTimer += delta;
-                    enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 800) * 20 + 0.03 * delta; // Slowly lower
-                    break;
                 case 'swooping':
-                    enemy.moveTimer += delta;
-                    if (enemy.moveTimer > 3000) {
-                        enemy.y = enemy.originalY + Math.max(0, Math.sin(enemy.moveTimer / 500) * 30) + 0.03 * delta; // Slowly lower
-                    } else {
-                        enemy.y += 0.03 * delta; // Slowly lower
-                    }
-                    break;
                 case 'standard':
-                    enemy.y += 0.03 * delta; // Slowly lower
+                    // All non-wasp enemies now have the same very slow descent
+                    enemy.y += 0.002 * (delta); // Very slow constant descent (half speed)
                     break;
             }
         });
@@ -400,7 +425,7 @@ export class Start extends Phaser.Scene {
         if (bullet) {
             bullet.setActive(true);
             bullet.setVisible(true);
-            bullet.setVelocityY(190); // Slightly slower
+            bullet.setVelocityY(250); // Increased bullet speed
         }
     }
 
@@ -452,10 +477,28 @@ export class Start extends Phaser.Scene {
         }
     }
     
+    updateLivesDisplay() {
+        // Clear existing lives display
+        this.livesGroup.clear(true, true);
+        
+        // Add heart icons for remaining lives
+        for (let i = 0; i < this.lives; i++) {
+            const heart = this.livesGroup.create(16 + (i * 30), 50, 'heart');
+            heart.setScale(0.5);
+        }
+    }
+
     enemyBulletHitPlayer(bullet, player) {
-        // Deactivate the bullet
+        if (!bullet.active) return; // Prevent multiple hits from the same bullet
+        
+        // Deactivate the bullet immediately
         bullet.setActive(false);
         bullet.setVisible(false);
+        bullet.destroy(); // Ensure bullet is completely removed
+        
+        // Reduce lives
+        this.lives--;
+        this.updateLivesDisplay();
         
         // Flash the player
         this.tweens.add({
@@ -465,10 +508,22 @@ export class Start extends Phaser.Scene {
             yoyo: true,
             repeat: 3,
             onComplete: () => {
-                // Player death logic would go here
-                // For now, just reset position
-                player.x = 400;
-                player.alpha = 1;
+                if (this.lives <= 0) {
+                    // Show game over state
+                    this.gameOverText.setVisible(true);
+                    this.finalScoreText.setText(`Final Score: ${this.score}`).setVisible(true);
+                    this.restartText.setVisible(true);
+                    
+                    // Disable player controls and destroy player
+                    this.player.setActive(false);
+                    this.player.setVisible(false);
+                    this.player.destroy();
+                    this.player = null;
+                } else {
+                    // Reset position
+                    player.x = 400;
+                    player.alpha = 1;
+                }
             }
         });
     }
