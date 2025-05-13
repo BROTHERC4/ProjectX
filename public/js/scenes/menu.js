@@ -148,7 +148,7 @@ class MenuScene extends Phaser.Scene {
   
   startSinglePlayer() {
     // Start the standard single player game
-    this.scene.start('Start');
+    this.scene.start('SinglePlayerStart');
   }
   
   createForm(title) {

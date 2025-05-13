@@ -25,8 +25,10 @@ window.addEventListener('DOMContentLoaded', function() {
       scene: [
         MenuScene,
         Start,
+        SinglePlayerStart,
         LobbyScene,
-        GameOverScene
+        GameOverScene,
+        SinglePlayerGameOver
       ]
     };
     
