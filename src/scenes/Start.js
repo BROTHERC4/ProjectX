@@ -7,8 +7,8 @@ export class Start extends Phaser.Scene {
     preload() {
         this.load.image('background', 'assets/space.png');
         
-        //  The ship sprite is CC0 from https://ansimuz.itch.io - check out his other work!
-        this.load.spritesheet('ship', 'assets/spaceship.png', { frameWidth: 176, frameHeight: 96 });
+        // Load the spaceship as a regular image, not a spritesheet
+        this.load.image('ship', 'assets/spaceship.png');
 
         // Create a simple bullet sprite
         const graphics = this.make.graphics();
@@ -23,16 +23,9 @@ export class Start extends Phaser.Scene {
 
         // Create player as a physics sprite
         this.player = this.physics.add.sprite(400, 500, 'ship');
-        this.player.setScale(0.5);
+        // Scale down the ship to fit the game's dimensions better
+        this.player.setScale(0.2); 
         this.player.setCollideWorldBounds(true);
-
-        this.player.anims.create({
-            key: 'fly',
-            frames: this.anims.generateFrameNumbers('ship', { start: 0, end: 2 }),
-            frameRate: 15,
-            repeat: -1
-        });
-        this.player.play('fly');
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -66,7 +59,8 @@ export class Start extends Phaser.Scene {
     }
 
     fireBullet() {
-        const bullet = this.bullets.get(this.player.x, this.player.y - 20);
+        // Adjust bullet position to fire from the center of the ship
+        const bullet = this.bullets.get(this.player.x, this.player.y - 40);
         if (bullet) {
             bullet.setActive(true);
             bullet.setVisible(true);
