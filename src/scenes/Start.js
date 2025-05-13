@@ -269,17 +269,6 @@ export class Start extends Phaser.Scene {
                 this.fireBullet();
                 this.lastFired = time + this.fireRate;
             }
-
-            // Improved player state debug log
-            if (this.DEBUG) {
-                console.log("Player state:", {
-                    x: this.player.x,
-                    y: this.player.y,
-                    active: this.player.active,
-                    visible: this.player.visible,
-                    invincible: this.playerInvincible
-                });
-            }
         }
 
         // Clean up bullets that are out of bounds
