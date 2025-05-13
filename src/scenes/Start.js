@@ -9,6 +9,37 @@ export class Start extends Phaser.Scene {
         
         // Load the spaceship as a regular image, not a spritesheet
         this.load.image('ship', 'assets/spaceship.png');
+        this.load.image('ship-red', 'assets/spaceshipred.png');
+        
+        // Load enemy sprites - both individual frames and spritesheets
+        // Large jellyfish sprites
+        this.load.spritesheet('jellyfish-large-sheet', 'assets/jellyfish-large-Sheet.png', {
+            frameWidth: 32,  // Adjust these values based on the actual dimensions
+            frameHeight: 32
+        });
+        this.load.image('jellyfish-large1', 'assets/jellyfish-large1.png');
+        this.load.image('jellyfish-large2', 'assets/jellyfish-large2.png');
+        this.load.image('jellyfish-large3', 'assets/jellyfish-large3.png');
+        this.load.image('jellyfish-large4', 'assets/jellyfish-large4.png');
+        
+        // Medium jellyfish sprites
+        this.load.spritesheet('jellyfish-medium-sheet', 'assets/jellyfish-medium-Sheet.png', {
+            frameWidth: 24,  // Adjust these values based on the actual dimensions
+            frameHeight: 24
+        });
+        this.load.image('jellyfish-medium1', 'assets/jellyfish-medium1.png');
+        this.load.image('jellyfish-medium2', 'assets/jellyfish-medium2.png');
+        
+        // Tiny jellyfish sprites
+        this.load.spritesheet('jellyfish-tiny-sheet', 'assets/jellyfish-tiny-Sheet.png', {
+            frameWidth: 16,  // Adjust these values based on the actual dimensions
+            frameHeight: 16
+        });
+        this.load.image('jellyfish-tiny1', 'assets/jellyfish-tiny1.png');
+        this.load.image('jellyfish-tiny2', 'assets/jellyfish-tiny2.png');
+        
+        // Wasp sprite
+        this.load.image('wasp', 'assets/wasp.png');
 
         // Create a simple bullet sprite
         const graphics = this.make.graphics();
@@ -17,48 +48,138 @@ export class Start extends Phaser.Scene {
         graphics.generateTexture('bullet', 4, 16);
         graphics.destroy();
         
+        // Create an enemy bullet sprite (red)
+        const enemyBulletGraphics = this.make.graphics();
+        enemyBulletGraphics.fillStyle(0xff0000, 1);
+        enemyBulletGraphics.fillRect(0, 0, 4, 16);
+        enemyBulletGraphics.generateTexture('enemy-bullet', 4, 16);
+        enemyBulletGraphics.destroy();
+        
         // Create a barrier piece sprite (white instead of green)
         const barrierGraphics = this.make.graphics();
-        barrierGraphics.fillStyle(0xffffff, 1); // Changed from 0x00ff00 to 0xffffff (white)
+        barrierGraphics.fillStyle(0xffffff, 1);
         barrierGraphics.fillRect(0, 0, 8, 8);
         barrierGraphics.generateTexture('barrier-piece', 8, 8);
         barrierGraphics.destroy();
     }
 
     create() {
+        // Create animations for the enemies
+        this.createAnimations();
+        
         this.background = this.add.tileSprite(400, 300, 800, 600, 'background');
+
+        // Initialize score
+        this.score = 0;
+        this.scoreText = this.add.text(16, 16, 'Score: 0', { 
+            fontSize: '24px', 
+            fill: '#fff',
+            fontFamily: 'Arial'
+        });
 
         // Create barriers
         this.createBarriers();
 
         // Create player as a physics sprite
-        // Moved player further down from y=530 to y=550
         this.player = this.physics.add.sprite(400, 550, 'ship');
-        // Scale down the ship to fit the game's dimensions better
         this.player.setScale(0.15);
         this.player.setCollideWorldBounds(true);
 
+        // Set up controls
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
         this.playerSpeed = 200;
 
+        // Create player bullets
         this.bullets = this.physics.add.group({
             defaultKey: 'bullet',
             maxSize: 10
         });
 
-        // Add collision between bullets and barriers
-        this.physics.add.collider(this.bullets, this.barrierPieces, this.bulletHitBarrier, null, this);
+        // Create enemy bullets
+        this.enemyBullets = this.physics.add.group({
+            defaultKey: 'enemy-bullet',
+            maxSize: 30
+        });
 
+        // Create enemy groups
+        this.jellyfishLarge = this.physics.add.group();
+        this.jellyfishMedium = this.physics.add.group();
+        this.jellyfishTiny = this.physics.add.group();
+        this.wasps = this.physics.add.group();
+
+        // Add all enemies to a combined group for easier collision detection
+        this.enemies = this.add.group();
+
+        // Create the enemies
+        this.createEnemies();
+
+        // Add collisions
+        this.physics.add.collider(this.bullets, this.barrierPieces, this.bulletHitBarrier, null, this);
+        this.physics.add.collider(this.enemyBullets, this.barrierPieces, this.bulletHitBarrier, null, this);
+        this.physics.add.overlap(this.bullets, this.enemies, this.bulletHitEnemy, null, this);
+        this.physics.add.overlap(this.enemyBullets, this.player, this.enemyBulletHitPlayer, null, this);
+
+        // Set up timing variables for game logic
         this.lastFired = 0;
         this.fireRate = 200;
+        this.enemyDirection = 1; // 1 for right, -1 for left
+        this.enemySpeed = 50;
+        this.enemyMoveDown = false;
+        this.enemyShotTime = 0;
+    }
+
+    createAnimations() {
+        // Check if we have frame data for the spritesheets before creating animations
+        if (this.textures.exists('jellyfish-large-sheet')) {
+            // Create animation for large jellyfish
+            this.anims.create({
+                key: 'jellyfish-large-anim',
+                frames: this.anims.generateFrameNumbers('jellyfish-large-sheet', { start: 0, end: 3 }),
+                frameRate: 8,
+                repeat: -1
+            });
+        }
+
+        // If spritesheets aren't working correctly, we can create animations from individual frames
+        this.anims.create({
+            key: 'jellyfish-large-frames',
+            frames: [
+                { key: 'jellyfish-large1' },
+                { key: 'jellyfish-large2' },
+                { key: 'jellyfish-large3' },
+                { key: 'jellyfish-large4' }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'jellyfish-medium-frames',
+            frames: [
+                { key: 'jellyfish-medium1' },
+                { key: 'jellyfish-medium2' }
+            ],
+            frameRate: 6,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'jellyfish-tiny-frames',
+            frames: [
+                { key: 'jellyfish-tiny1' },
+                { key: 'jellyfish-tiny2' }
+            ],
+            frameRate: 10,
+            repeat: -1
+        });
     }
 
     update(time, delta) {
-        // Further reduced background scrolling speed from 1 to 0.5
+        // Background scrolling
         this.background.tilePositionY -= 0.5;
 
+        // Player movement
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-this.playerSpeed);
         } else if (this.cursors.right.isDown) {
@@ -67,6 +188,7 @@ export class Start extends Phaser.Scene {
             this.player.setVelocityX(0);
         }
 
+        // Player shooting
         if (this.fireKey.isDown && time > this.lastFired) {
             this.fireBullet();
             this.lastFired = time + this.fireRate;
@@ -79,6 +201,16 @@ export class Start extends Phaser.Scene {
                 bullet.setVisible(false);
             }
         });
+
+        this.enemyBullets.children.each(bullet => {
+            if (bullet.active && (bullet.y < 0 || bullet.y > 600)) {
+                bullet.setActive(false);
+                bullet.setVisible(false);
+            }
+        });
+
+        // Update enemy movement
+        this.updateEnemies(time, delta);
     }
 
     fireBullet() {
@@ -111,7 +243,6 @@ export class Start extends Phaser.Scene {
         ];
 
         // Calculate evenly spaced positions for barriers
-        // For 4 barriers, we need to divide the screen width (800) into 5 parts
         const screenWidth = 800;
         const numBarriers = 4;
         const spacing = screenWidth / (numBarriers + 1);
@@ -123,7 +254,6 @@ export class Start extends Phaser.Scene {
         }
         
         barrierPositions.forEach(xPos => {
-            // Create a barrier at position xPos
             this.createSingleBarrier(xPos, 450, barrierShape);
         });
     }
@@ -131,22 +261,142 @@ export class Start extends Phaser.Scene {
     createSingleBarrier(xPos, yPos, shape) {
         const pieceSize = 8;
         
-        // Loop through the barrier shape and create pieces
         for (let row = 0; row < shape.length; row++) {
             for (let col = 0; col < shape[row].length; col++) {
                 if (shape[row][col] === 1) {
-                    // Calculate position for this piece
                     const x = xPos + (col * pieceSize) - (shape[row].length * pieceSize / 2);
                     const y = yPos + (row * pieceSize);
                     
-                    // Create a barrier piece at this position
                     const piece = this.barrierPieces.create(x, y, 'barrier-piece');
                     piece.setImmovable(true);
-                    
-                    // Optional: Add some random durability to pieces (1-3 hits)
                     piece.durability = Phaser.Math.Between(1, 3);
                 }
             }
+        }
+    }
+
+    createEnemies() {
+        // Create rows of different enemy types
+        
+        // Wasp row (top row) - fastest, zigzag pattern
+        for (let i = 0; i < 8; i++) {
+            const wasp = this.wasps.create(100 + i * 80, 80, 'wasp');
+            wasp.setScale(0.5);
+            wasp.health = 1;
+            wasp.points = 50;
+            wasp.originalX = wasp.x;
+            wasp.originalY = wasp.y;
+            wasp.movePattern = 'zigzag';
+            wasp.moveTimer = i * 100; // Stagger movement timing
+            this.enemies.add(wasp);
+        }
+        
+        // Large jellyfish row (second row) - slowest, highest health
+        for (let i = 0; i < 8; i++) {
+            // Try to use spritesheet if it's correctly loaded, otherwise fallback to frame animation
+            const jellyLarge = this.jellyfishLarge.create(100 + i * 80, 150, 'jellyfish-large1');
+            jellyLarge.setScale(0.7);
+            jellyLarge.health = 3;
+            jellyLarge.points = 30;
+            jellyLarge.originalX = jellyLarge.x;
+            jellyLarge.originalY = jellyLarge.y;
+            jellyLarge.movePattern = 'sineWave';
+            jellyLarge.moveTimer = i * 100;
+            jellyLarge.play('jellyfish-large-frames');
+            this.enemies.add(jellyLarge);
+        }
+        
+        // Medium jellyfish row (third row) - medium movement and health
+        for (let i = 0; i < 8; i++) {
+            const jellyMed = this.jellyfishMedium.create(100 + i * 80, 220, 'jellyfish-medium1');
+            jellyMed.setScale(0.6);
+            jellyMed.health = 2;
+            jellyMed.points = 20;
+            jellyMed.originalX = jellyMed.x;
+            jellyMed.originalY = jellyMed.y;
+            jellyMed.movePattern = 'standard';
+            jellyMed.play('jellyfish-medium-frames');
+            this.enemies.add(jellyMed);
+        }
+        
+        // Tiny jellyfish row (bottom row) - fast, less health
+        for (let i = 0; i < 8; i++) {
+            const jellyTiny = this.jellyfishTiny.create(100 + i * 80, 290, 'jellyfish-tiny1');
+            jellyTiny.setScale(0.5);
+            jellyTiny.health = 1;
+            jellyTiny.points = 10;
+            jellyTiny.originalX = jellyTiny.x;
+            jellyTiny.originalY = jellyTiny.y;
+            jellyTiny.movePattern = 'swooping';
+            jellyTiny.moveTimer = i * 150;
+            jellyTiny.play('jellyfish-tiny-frames');
+            this.enemies.add(jellyTiny);
+        }
+    }
+
+    updateEnemies(time, delta) {
+        let moveDown = false;
+        let moveSpeed = this.enemySpeed * delta / 1000;
+        
+        // Check if any enemy is at screen edge
+        this.enemies.children.entries.forEach(enemy => {
+            if ((enemy.x < 50 && this.enemyDirection < 0) || 
+                (enemy.x > 750 && this.enemyDirection > 0)) {
+                moveDown = true;
+            }
+        });
+        
+        if (moveDown) {
+            // Reverse direction and move down
+            this.enemyDirection *= -1;
+            this.enemies.children.entries.forEach(enemy => {
+                enemy.y += 20;
+            });
+        }
+        
+        // Move enemies based on their specific patterns
+        this.enemies.children.entries.forEach(enemy => {
+            // Base horizontal movement for all enemies
+            enemy.x += moveSpeed * this.enemyDirection;
+            
+            // Apply specific movement patterns based on enemy type
+            switch(enemy.movePattern) {
+                case 'zigzag':
+                    // Wasp zigzag movement
+                    enemy.moveTimer += delta;
+                    enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 300) * 15;
+                    break;
+                case 'sineWave':
+                    // Large jellyfish sine wave movement
+                    enemy.moveTimer += delta;
+                    enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 800) * 20;
+                    break;
+                case 'swooping':
+                    // Tiny jellyfish swooping movement
+                    enemy.moveTimer += delta;
+                    if (enemy.moveTimer > 3000) {
+                        enemy.y = enemy.originalY + Math.max(0, Math.sin(enemy.moveTimer / 500) * 30);
+                    }
+                    break;
+                case 'standard':
+                    // Medium jellyfish standard Space Invaders movement
+                    // Just the basic horizontal movement with occasional steps down
+                    break;
+            }
+            
+            // Random enemy shooting
+            if (Phaser.Math.Between(0, 5000) < 5 * delta) {
+                this.enemyShoot(enemy);
+            }
+        });
+    }
+    
+    enemyShoot(enemy) {
+        const bullet = this.enemyBullets.get(enemy.x, enemy.y + 20);
+        if (bullet) {
+            bullet.setActive(true);
+            bullet.setVisible(true);
+            bullet.setVelocityY(200);
         }
     }
 
@@ -165,5 +415,80 @@ export class Start extends Phaser.Scene {
             // Visually show damage by changing the alpha or tint
             barrierPiece.setAlpha(barrierPiece.durability / 3);
         }
+    }
+    
+    bulletHitEnemy(bullet, enemy) {
+        // Deactivate the bullet
+        bullet.setActive(false);
+        bullet.setVisible(false);
+        
+        // Reduce enemy health
+        enemy.health--;
+        
+        // Flash the enemy to indicate hit
+        this.tweens.add({
+            targets: enemy,
+            alpha: 0.5,
+            duration: 50,
+            yoyo: true
+        });
+        
+        // If health is zero, destroy the enemy
+        if (enemy.health <= 0) {
+            // Add points to score
+            this.score += enemy.points;
+            this.scoreText.setText('Score: ' + this.score);
+            
+            // Create destruction effect
+            this.createExplosion(enemy.x, enemy.y);
+            
+            // Remove the enemy
+            enemy.destroy();
+        }
+    }
+    
+    enemyBulletHitPlayer(bullet, player) {
+        // Deactivate the bullet
+        bullet.setActive(false);
+        bullet.setVisible(false);
+        
+        // Flash the player
+        this.tweens.add({
+            targets: player,
+            alpha: 0.5,
+            duration: 100,
+            yoyo: true,
+            repeat: 3,
+            onComplete: () => {
+                // Player death logic would go here
+                // For now, just reset position
+                player.x = 400;
+                player.alpha = 1;
+            }
+        });
+    }
+    
+    createExplosion(x, y) {
+        // Create a simple particle explosion effect
+        const particles = this.add.particles('barrier-piece');
+        
+        const emitter = particles.createEmitter({
+            x: x,
+            y: y,
+            speed: { min: -100, max: 100 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 1, end: 0 },
+            blendMode: 'ADD',
+            lifespan: 500,
+            gravityY: 300
+        });
+        
+        // Emit particles then destroy the emitter
+        emitter.explode(15);
+        
+        // Self-destruct the particle manager after a delay
+        this.time.delayedCall(1000, () => {
+            particles.destroy();
+        });
     }
 }
