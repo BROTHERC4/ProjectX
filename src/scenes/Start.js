@@ -38,8 +38,10 @@ export class Start extends Phaser.Scene {
         this.load.image('jellyfish-tiny1', 'assets/jellyfish-tiny1.png');
         this.load.image('jellyfish-tiny2', 'assets/jellyfish-tiny2.png');
         
-        // Wasp sprite
-        this.load.image('wasp', 'assets/wasp.png');
+        // Wasp as a spritesheet (2 frames, 37x26)
+        this.load.spritesheet('wasp-sheet', 'assets/wasp.png', {
+            frameWidth: 37, frameHeight: 26
+        });
 
         // Create a simple bullet sprite
         const graphics = this.make.graphics();
@@ -173,6 +175,14 @@ export class Start extends Phaser.Scene {
             frameRate: 10,
             repeat: -1
         });
+
+        // Wasp animation (spritesheet, 2 frames)
+        this.anims.create({
+            key: 'wasp-anim',
+            frames: this.anims.generateFrameNumbers('wasp-sheet', { start: 0, end: 1 }),
+            frameRate: 8,
+            repeat: -1
+        });
     }
 
     update(time, delta) {
@@ -280,14 +290,15 @@ export class Start extends Phaser.Scene {
         
         // Wasp row (top row) - fastest, zigzag pattern
         for (let i = 0; i < 8; i++) {
-            const wasp = this.wasps.create(100 + i * 80, 80, 'wasp');
-            wasp.setScale(0.5);
+            const wasp = this.wasps.create(100 + i * 80, 80, 'wasp-sheet');
+            wasp.setScale(1.0); // Increased size
             wasp.health = 1;
             wasp.points = 50;
             wasp.originalX = wasp.x;
             wasp.originalY = wasp.y;
             wasp.movePattern = 'zigzag';
-            wasp.moveTimer = i * 100; // Stagger movement timing
+            wasp.moveTimer = i * 100;
+            wasp.play('wasp-anim');
             this.enemies.add(wasp);
         }
         
@@ -295,7 +306,7 @@ export class Start extends Phaser.Scene {
         for (let i = 0; i < 8; i++) {
             // Try to use spritesheet if it's correctly loaded, otherwise fallback to frame animation
             const jellyLarge = this.jellyfishLarge.create(100 + i * 80, 150, 'jellyfish-large1');
-            jellyLarge.setScale(0.7);
+            jellyLarge.setScale(1.2); // Increased size
             jellyLarge.health = 3;
             jellyLarge.points = 30;
             jellyLarge.originalX = jellyLarge.x;
@@ -309,7 +320,7 @@ export class Start extends Phaser.Scene {
         // Medium jellyfish row (third row) - medium movement and health
         for (let i = 0; i < 8; i++) {
             const jellyMed = this.jellyfishMedium.create(100 + i * 80, 220, 'jellyfish-medium1');
-            jellyMed.setScale(0.6);
+            jellyMed.setScale(1.0); // Increased size
             jellyMed.health = 2;
             jellyMed.points = 20;
             jellyMed.originalX = jellyMed.x;
@@ -322,7 +333,7 @@ export class Start extends Phaser.Scene {
         // Tiny jellyfish row (bottom row) - fast, less health
         for (let i = 0; i < 8; i++) {
             const jellyTiny = this.jellyfishTiny.create(100 + i * 80, 290, 'jellyfish-tiny1');
-            jellyTiny.setScale(0.5);
+            jellyTiny.setScale(0.8); // Increased size
             jellyTiny.health = 1;
             jellyTiny.points = 10;
             jellyTiny.originalX = jellyTiny.x;
