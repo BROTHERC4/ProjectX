@@ -493,24 +493,19 @@ export class Start extends Phaser.Scene {
     }
 
     enemyBulletHitPlayer(bullet, player) {
-        // Skip if bullet not active or player invincible
-        if (!bullet.active || this.playerInvincible) return;
+        // Skip if bullet not active
+        if (!bullet.active) return;
         
-        console.log("Player hit! Lives before:", this.lives);
-        
-        // Immediately deactivate bullet
+        // Deactivate the bullet
         bullet.setActive(false);
         bullet.setVisible(false);
         bullet.destroy();
-        
-        // Activate invincibility state
-        this.playerInvincible = true;
         
         // Reduce lives
         this.lives--;
         this.updateLivesDisplay();
         
-        console.log("Lives after hit:", this.lives);
+        console.log("Player hit! Lives remaining:", this.lives);
         
         // Check if game over
         if (this.lives <= 0) {
@@ -524,41 +519,7 @@ export class Start extends Phaser.Scene {
                 this.player.destroy();
                 this.player = null;
             }
-            return;
         }
-        
-        // Create a shield/flash effect overlay INSTEAD of changing player alpha
-        const flashEffect = this.add.sprite(player.x, player.y, 'ship');
-        flashEffect.setScale(0.15);
-        flashEffect.setTint(0xff0000); // Red tint for hit effect
-        
-        // Flash the effect sprite instead of the player
-        let flashCount = 0;
-        const flashPlayer = () => {
-            // Toggle visibility
-            player.setAlpha(player.alpha === 1 ? 0.3 : 1);
-            flashCount++;
-            
-            if (flashCount < 10) {
-                // Continue flashing
-                this.time.delayedCall(100, flashPlayer);
-            } else {
-                // End of flashing sequence
-                player.setAlpha(1);
-                
-                // Check if game over
-                if (this.lives <= 0) {
-                    this.handleGameOver();
-                } else {
-                    // End invincibility after delay (do not reset player.x)
-                    this.time.delayedCall(500, () => {
-                        this.playerInvincible = false;
-                        if (this.DEBUG) console.log("Player invincibility ended");
-                    });
-                }
-            }
-        };
-        // ... existing code ...
     }
 
     handleGameOver() {
