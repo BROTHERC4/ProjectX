@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProjectX Multiplayer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            color: #fff;
+        }
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+        }
+        #loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Loading game assets...</p>
+        </div>
+    </div>
+
+    <!-- Socket.io Client -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- Phaser -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    
+    <!-- Game Scripts -->
+    <script src="/js/socket-client.js"></script>
+    <script src="/js/scenes/menu.js"></script>
+    <script src="/js/scenes/lobby.js"></script>
+    <script src="/js/scenes/start.js"></script>
+    <script src="/js/scenes/game-over.js"></script>
+    <script src="/js/game.js"></script>
+    
+    <script>
+        // Show loading screen until game is ready
+        window.addEventListener('load', function() {
+            const loading = document.getElementById('loading');
+            
+            // Remove loading screen when Phaser has started
+            document.addEventListener('phaser-ready', function() {
+                loading.style.display = 'none';
+            });
+            
+            // Show error if loading takes too long
+            setTimeout(function() {
+                if (loading.style.display !== 'none') {
+                    loading.innerHTML = '<p>Game loading is taking longer than expected. Please check your connection or refresh the page.</p>';
+                }
+            }, 10000);
+        });
+    </script>
+</body>
+</html> 

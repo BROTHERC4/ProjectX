@@ -1,0 +1,374 @@
+/**
+ * Menu Scene - First screen of the game
+ */
+class MenuScene extends Phaser.Scene {
+  constructor() {
+    super('MenuScene');
+  }
+
+  preload() {
+    // Load assets
+    this.load.image('background', 'assets/space.png');
+    this.load.image('logo', 'assets/logo.png');
+    
+    // Load custom font
+    this.load.bitmapFont('arcade', 'assets/fonts/arcade.png', 'assets/fonts/arcade.xml');
+  }
+
+  create() {
+    // Add background
+    this.add.tileSprite(400, 300, 800, 600, 'background');
+    
+    // Add logo or title
+    const title = this.add.text(400, 100, 'ProjectX Multiplayer', {
+      fontFamily: 'Arial',
+      fontSize: 48,
+      color: '#ffffff',
+      stroke: '#333333',
+      strokeThickness: 6,
+      shadow: { offsetX: 2, offsetY: 2, color: '#000', blur: 2, stroke: true, fill: true }
+    }).setOrigin(0.5);
+    
+    // Create main menu container
+    const menuContainer = this.add.container(400, 300);
+    
+    // Create buttons
+    const buttonStyle = {
+      fontFamily: 'Arial',
+      fontSize: 24,
+      color: '#ffffff',
+      backgroundColor: '#222266',
+      padding: { left: 20, right: 20, top: 10, bottom: 10 }
+    };
+    
+    // Create game button
+    const createButton = this.add.text(0, -60, 'Create Game', buttonStyle)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover', () => this.buttonHover(createButton))
+      .on('pointerout', () => this.buttonOut(createButton))
+      .on('pointerdown', () => this.showCreateGame());
+    
+    // Join game button
+    const joinButton = this.add.text(0, 0, 'Join Game', buttonStyle)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover', () => this.buttonHover(joinButton))
+      .on('pointerout', () => this.buttonOut(joinButton))
+      .on('pointerdown', () => this.showJoinGame());
+    
+    // Single player button
+    const singlePlayerButton = this.add.text(0, 60, 'Single Player', buttonStyle)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover', () => this.buttonHover(singlePlayerButton))
+      .on('pointerout', () => this.buttonOut(singlePlayerButton))
+      .on('pointerdown', () => this.startSinglePlayer());
+    
+    // Add buttons to container
+    menuContainer.add([createButton, joinButton, singlePlayerButton]);
+    
+    // Create form containers (initially hidden)
+    this.createFormContainer = this.createForm('Create Game');
+    this.createFormContainer.setVisible(false);
+    
+    this.joinFormContainer = this.createJoinForm();
+    this.joinFormContainer.setVisible(false);
+    
+    // Add main menu to the scene
+    this.add.existing(menuContainer);
+    this.menuContainer = menuContainer;
+    
+    // Setup socket client event handlers
+    this.setupSocketHandlers();
+  }
+  
+  setupSocketHandlers() {
+    // When a room is created, move to the lobby
+    window.socketClient.onRoomCreated = (data) => {
+      console.log('Room created, moving to lobby');
+      this.scene.start('LobbyScene', { 
+        roomId: data.roomId,
+        playerId: data.playerId,
+        isHost: true 
+      });
+    };
+    
+    // When joining a room is successful
+    window.socketClient.onRoomJoined = (data) => {
+      console.log('Room joined, moving to lobby');
+      this.scene.start('LobbyScene', { 
+        roomId: data.roomId,
+        playerId: data.playerId,
+        isHost: false 
+      });
+    };
+    
+    // Handle errors
+    window.socketClient.onError = (message) => {
+      this.showError(message);
+    };
+  }
+  
+  buttonHover(button) {
+    button.setStyle({ backgroundColor: '#3333aa' });
+  }
+  
+  buttonOut(button) {
+    button.setStyle({ backgroundColor: '#222266' });
+  }
+  
+  showCreateGame() {
+    this.menuContainer.setVisible(false);
+    this.createFormContainer.setVisible(true);
+  }
+  
+  showJoinGame() {
+    this.menuContainer.setVisible(false);
+    this.joinFormContainer.setVisible(true);
+  }
+  
+  startSinglePlayer() {
+    // Start the standard single player game
+    this.scene.start('Start');
+  }
+  
+  createForm(title) {
+    const container = this.add.container(400, 300);
+    
+    // Background
+    const bg = this.add.rectangle(0, 0, 400, 300, 0x000000, 0.8)
+      .setStrokeStyle(2, 0x3333aa);
+    container.add(bg);
+    
+    // Title
+    const titleText = this.add.text(0, -120, title, {
+      fontFamily: 'Arial',
+      fontSize: 28,
+      color: '#ffffff'
+    }).setOrigin(0.5);
+    container.add(titleText);
+    
+    // Name input label
+    const nameLabel = this.add.text(-150, -60, 'Your Name:', {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      color: '#ffffff'
+    }).setOrigin(0, 0.5);
+    container.add(nameLabel);
+    
+    // Name input field
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.style = `
+      position: absolute;
+      width: 200px;
+      padding: 8px;
+      border: 2px solid #3333aa;
+      border-radius: 4px;
+      background-color: #111133;
+      color: white;
+      font-size: 16px;
+    `;
+    nameInput.value = 'Player';
+    document.getElementById('game-container').appendChild(nameInput);
+    
+    const nameElement = this.add.dom(50, -60, nameInput);
+    container.add(nameElement);
+    
+    // Create room button
+    const createButton = this.add.text(0, 40, 'Create', {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      backgroundColor: '#222266',
+      color: '#ffffff',
+      padding: { left: 15, right: 15, top: 8, bottom: 8 }
+    })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover', () => this.buttonHover(createButton))
+      .on('pointerout', () => this.buttonOut(createButton))
+      .on('pointerdown', () => {
+        const name = nameInput.value.trim() || 'Player';
+        window.socketClient.createRoom(name);
+      });
+    container.add(createButton);
+    
+    // Back button
+    const backButton = this.add.text(0, 100, 'Back to Menu', {
+      fontFamily: 'Arial',
+      fontSize: 18,
+      color: '#aaaaaa'
+    })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover', () => backButton.setStyle({ color: '#ffffff' }))
+      .on('pointerout', () => backButton.setStyle({ color: '#aaaaaa' }))
+      .on('pointerdown', () => {
+        nameInput.remove();
+        container.setVisible(false);
+        this.menuContainer.setVisible(true);
+      });
+    container.add(backButton);
+    
+    // Error message (initially empty)
+    const errorText = this.add.text(0, 150, '', {
+      fontFamily: 'Arial',
+      fontSize: 16,
+      color: '#ff0000'
+    }).setOrigin(0.5);
+    container.add(errorText);
+    container.errorText = errorText;
+    
+    return container;
+  }
+  
+  createJoinForm() {
+    const container = this.add.container(400, 300);
+    
+    // Background
+    const bg = this.add.rectangle(0, 0, 400, 300, 0x000000, 0.8)
+      .setStrokeStyle(2, 0x3333aa);
+    container.add(bg);
+    
+    // Title
+    const titleText = this.add.text(0, -120, 'Join Game', {
+      fontFamily: 'Arial',
+      fontSize: 28,
+      color: '#ffffff'
+    }).setOrigin(0.5);
+    container.add(titleText);
+    
+    // Name input
+    const nameLabel = this.add.text(-150, -70, 'Your Name:', {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      color: '#ffffff'
+    }).setOrigin(0, 0.5);
+    container.add(nameLabel);
+    
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.style = `
+      position: absolute;
+      width: 200px;
+      padding: 8px;
+      border: 2px solid #3333aa;
+      border-radius: 4px;
+      background-color: #111133;
+      color: white;
+      font-size: 16px;
+    `;
+    nameInput.value = 'Player';
+    document.getElementById('game-container').appendChild(nameInput);
+    
+    const nameElement = this.add.dom(50, -70, nameInput);
+    container.add(nameElement);
+    
+    // Room code input
+    const roomLabel = this.add.text(-150, 0, 'Room Code:', {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      color: '#ffffff'
+    }).setOrigin(0, 0.5);
+    container.add(roomLabel);
+    
+    const roomInput = document.createElement('input');
+    roomInput.type = 'text';
+    roomInput.maxLength = 6;
+    roomInput.style = `
+      position: absolute;
+      width: 200px;
+      padding: 8px;
+      border: 2px solid #3333aa;
+      border-radius: 4px;
+      background-color: #111133;
+      color: white;
+      font-size: 16px;
+      text-transform: uppercase;
+    `;
+    document.getElementById('game-container').appendChild(roomInput);
+    
+    const roomElement = this.add.dom(50, 0, roomInput);
+    container.add(roomElement);
+    
+    // Join button
+    const joinButton = this.add.text(0, 70, 'Join', {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      backgroundColor: '#222266',
+      color: '#ffffff',
+      padding: { left: 15, right: 15, top: 8, bottom: 8 }
+    })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover', () => this.buttonHover(joinButton))
+      .on('pointerout', () => this.buttonOut(joinButton))
+      .on('pointerdown', () => {
+        const name = nameInput.value.trim() || 'Player';
+        const roomId = roomInput.value.trim().toUpperCase();
+        
+        if (!roomId) {
+          this.showError('Please enter a room code');
+          return;
+        }
+        
+        window.socketClient.joinRoom(roomId, name);
+      });
+    container.add(joinButton);
+    
+    // Back button
+    const backButton = this.add.text(0, 130, 'Back to Menu', {
+      fontFamily: 'Arial',
+      fontSize: 18,
+      color: '#aaaaaa'
+    })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover', () => backButton.setStyle({ color: '#ffffff' }))
+      .on('pointerout', () => backButton.setStyle({ color: '#aaaaaa' }))
+      .on('pointerdown', () => {
+        nameInput.remove();
+        roomInput.remove();
+        container.setVisible(false);
+        this.menuContainer.setVisible(true);
+      });
+    container.add(backButton);
+    
+    // Error message (initially empty)
+    const errorText = this.add.text(0, 180, '', {
+      fontFamily: 'Arial',
+      fontSize: 16,
+      color: '#ff0000'
+    }).setOrigin(0.5);
+    container.add(errorText);
+    container.errorText = errorText;
+    
+    return container;
+  }
+  
+  showError(message) {
+    // Show error message in the currently visible form
+    if (this.createFormContainer.visible) {
+      this.createFormContainer.errorText.setText(message);
+    } else if (this.joinFormContainer.visible) {
+      this.joinFormContainer.errorText.setText(message);
+    }
+    
+    // Clear error after 3 seconds
+    this.time.delayedCall(3000, () => {
+      if (this.createFormContainer.errorText) {
+        this.createFormContainer.errorText.setText('');
+      }
+      if (this.joinFormContainer.errorText) {
+        this.joinFormContainer.errorText.setText('');
+      }
+    });
+  }
+  
+  shutdown() {
+    // Clean up DOM elements when scene changes
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => input.remove());
+  }
+} 
