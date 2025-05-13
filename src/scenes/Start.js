@@ -153,7 +153,6 @@ export class Start extends Phaser.Scene {
         this.playerBulletCollider = this.physics.add.collider(this.bullets, this.barrierPieces, this.bulletHitBarrier, null, this);
         this.enemyBulletBarrierCollider = this.physics.add.collider(this.enemyBullets, this.barrierPieces, this.bulletHitBarrier, null, this);
         this.bulletEnemyCollider = this.physics.add.overlap(this.bullets, this.enemies, this.bulletHitEnemy, null, this);
-        this.enemyBulletPlayerCollider = this.physics.add.overlap(this.enemyBullets, this.player, this.enemyBulletHitPlayer, null, this);
 
         // Set up timing variables for game logic
         this.lastFired = 0;
@@ -490,7 +489,22 @@ export class Start extends Phaser.Scene {
         }
     }
 
+    removePlayerColliders() {
+        if (this.enemyBulletPlayerCollider) {
+            this.enemyBulletPlayerCollider.destroy();
+            this.enemyBulletPlayerCollider = null;
+        }
+    }
+
+    addPlayerColliders() {
+        this.enemyBulletPlayerCollider = this.physics.add.overlap(
+            this.enemyBullets, this.player, this.enemyBulletHitPlayer, null, this
+        );
+    }
+
     createPlayer() {
+        // Remove old colliders
+        this.removePlayerColliders();
         // If an old player exists, destroy it first
         if (this.player) {
             this.player.destroy();
@@ -499,8 +513,8 @@ export class Start extends Phaser.Scene {
         this.player = this.physics.add.sprite(400, 550, 'ship');
         this.player.setScale(0.15);
         this.player.setCollideWorldBounds(true);
-        // Important: Re-establish the collision detection
-        this.physics.add.overlap(this.enemyBullets, this.player, this.enemyBulletHitPlayer, null, this);
+        // Re-establish the collision detection
+        this.addPlayerColliders();
         if (this.DEBUG) console.log("New player created");
     }
 
@@ -522,10 +536,6 @@ export class Start extends Phaser.Scene {
             this.finalScoreText.setText(`Final Score: ${this.score}`).setVisible(true);
             this.restartText.setVisible(true);
             // Clean up the player - IMPORTANT: Remove collider first
-            if (this.enemyBulletPlayerCollider) {
-                this.enemyBulletPlayerCollider.destroy();
-                this.enemyBulletPlayerCollider = null;
-            }
             if (this.player) {
                 this.player.destroy();
                 this.player = null;
