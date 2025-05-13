@@ -291,7 +291,7 @@ export class Start extends Phaser.Scene {
         // Wasp row (top row) - fastest, zigzag pattern
         for (let i = 0; i < 8; i++) {
             const wasp = this.wasps.create(100 + i * 80, 80, 'wasp-sheet');
-            wasp.setScale(1.0); // Increased size
+            wasp.setScale(1.5); // Even larger size
             wasp.health = 1;
             wasp.points = 50;
             wasp.originalX = wasp.x;
@@ -306,7 +306,7 @@ export class Start extends Phaser.Scene {
         for (let i = 0; i < 8; i++) {
             // Try to use spritesheet if it's correctly loaded, otherwise fallback to frame animation
             const jellyLarge = this.jellyfishLarge.create(100 + i * 80, 150, 'jellyfish-large1');
-            jellyLarge.setScale(1.2); // Increased size
+            jellyLarge.setScale(1.7); // Even larger size
             jellyLarge.health = 3;
             jellyLarge.points = 30;
             jellyLarge.originalX = jellyLarge.x;
@@ -320,7 +320,7 @@ export class Start extends Phaser.Scene {
         // Medium jellyfish row (third row) - medium movement and health
         for (let i = 0; i < 8; i++) {
             const jellyMed = this.jellyfishMedium.create(100 + i * 80, 220, 'jellyfish-medium1');
-            jellyMed.setScale(1.0); // Increased size
+            jellyMed.setScale(1.4); // Even larger size
             jellyMed.health = 2;
             jellyMed.points = 20;
             jellyMed.originalX = jellyMed.x;
@@ -333,7 +333,7 @@ export class Start extends Phaser.Scene {
         // Tiny jellyfish row (bottom row) - fast, less health
         for (let i = 0; i < 8; i++) {
             const jellyTiny = this.jellyfishTiny.create(100 + i * 80, 290, 'jellyfish-tiny1');
-            jellyTiny.setScale(0.8); // Increased size
+            jellyTiny.setScale(1.2); // Even larger size
             jellyTiny.health = 1;
             jellyTiny.points = 10;
             jellyTiny.originalX = jellyTiny.x;
@@ -376,6 +376,10 @@ export class Start extends Phaser.Scene {
                     // Wasp zigzag movement
                     enemy.moveTimer += delta;
                     enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 300) * 15;
+                    // Only wasps (zigzag) can shoot
+                    if (Phaser.Math.Between(0, 5000) < 5 * delta) {
+                        this.enemyShoot(enemy);
+                    }
                     break;
                 case 'sineWave':
                     // Large jellyfish sine wave movement
@@ -394,11 +398,6 @@ export class Start extends Phaser.Scene {
                     // Just the basic horizontal movement with occasional steps down
                     break;
             }
-            
-            // Random enemy shooting
-            if (Phaser.Math.Between(0, 5000) < 5 * delta) {
-                this.enemyShoot(enemy);
-            }
         });
     }
     
@@ -407,7 +406,7 @@ export class Start extends Phaser.Scene {
         if (bullet) {
             bullet.setActive(true);
             bullet.setVisible(true);
-            bullet.setVelocityY(200);
+            bullet.setVelocityY(190); // Slightly slower
         }
     }
 
