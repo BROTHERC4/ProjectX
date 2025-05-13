@@ -121,7 +121,7 @@ class LobbyScene extends Phaser.Scene {
     };
     
     window.socketClient.onGameStarted = () => {
-      this.scene.start('StartScene', {
+      this.scene.start('Start', {
         roomId: this.roomId,
         playerId: this.playerId,
         isHost: this.isHost

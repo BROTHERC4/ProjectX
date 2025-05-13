@@ -24,8 +24,8 @@ window.addEventListener('DOMContentLoaded', function() {
       },
       scene: [
         MenuScene,
+        Start,
         LobbyScene,
-        StartScene,
         GameOverScene
       ]
     };

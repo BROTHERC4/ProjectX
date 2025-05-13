@@ -1,9 +1,9 @@
 /**
  * StartScene - Main game scene (multiplayer version)
  */
-class StartScene extends Phaser.Scene {
+class Start extends Phaser.Scene {
   constructor() {
-    super('StartScene');
+    super('Start');
     this.DEBUG = false; // Set to true for debugging
   }
 
