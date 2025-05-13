@@ -253,21 +253,33 @@ export class Start extends Phaser.Scene {
             return;
         }
 
-        // Check if player exists and is active
-        if (this.player && this.player.active) {
-            // Player movement
-            if (this.cursors.left.isDown) {
-                this.player.setVelocityX(-this.playerSpeed);
-            } else if (this.cursors.right.isDown) {
-                this.player.setVelocityX(this.playerSpeed);
-            } else {
-                this.player.setVelocityX(0);
+        // IMPORTANT: Add this check to ensure player exists and is properly set up
+        if (this.player) {
+            if (!this.player.active) {
+                // Attempt to recover player if it's deactivated somehow
+                this.player.setActive(true);
+                this.player.setVisible(true);
+                if (this.player.body) {
+                    this.player.body.enable = true;
+                }
+                if (this.DEBUG) console.log("RECOVERED PLAYER");
             }
+            
+            // Player movement - only if player has a body
+            if (this.player.body) {
+                if (this.cursors.left.isDown) {
+                    this.player.setVelocityX(-this.playerSpeed);
+                } else if (this.cursors.right.isDown) {
+                    this.player.setVelocityX(this.playerSpeed);
+                } else {
+                    this.player.setVelocityX(0);
+                }
 
-            // Player shooting
-            if (this.fireKey.isDown && time > this.lastFired) {
-                this.fireBullet();
-                this.lastFired = time + this.fireRate;
+                // Player shooting
+                if (this.fireKey.isDown && time > this.lastFired && !this.playerInvincible) {
+                    this.fireBullet();
+                    this.lastFired = time + this.fireRate;
+                }
             }
         }
 
@@ -542,38 +554,52 @@ export class Start extends Phaser.Scene {
     }
 
     enemyBulletHitPlayer(bullet, player) {
-        // Check for invincibility first
+        // Skip if already hit or game over
         if (!bullet.active || !player.active || this.gameOver || this.playerInvincible) return;
-
-        // Set player as invincible
-        this.playerInvincible = true;
-
-        // Deactivate the bullet
+        
+        // Deactivate the bullet first
         bullet.setActive(false);
         bullet.setVisible(false);
         bullet.destroy();
-
+        
+        // Make player invincible
+        this.playerInvincible = true;
+        
         // Reduce lives
         this.lives--;
         this.updateLivesDisplay();
+        
         if (this.DEBUG) console.log("Player hit! Lives remaining:", this.lives, "Player position:", player.x, player.y);
-
+        
         if (this.lives <= 0) {
             this.handleGameOver();
         } else {
-            // Reset player position and velocity
+            // Store original position and velocity
+            const originalY = player.y;
+            const originalVelocityX = player.body ? player.body.velocity.x : 0;
+            const originalVelocityY = player.body ? player.body.velocity.y : 0;
+            
+            // Reset position but keep Y
             player.x = 400;
-            player.y = 550;
-            if (player.setVelocity) player.setVelocity(0, 0);
-            if (player.body && player.body.setAllowGravity) player.body.setAllowGravity(false);
-
-            // Visual feedback for invincibility
+            player.y = originalY;
+            
+            // Important: Make sure physics body is still enabled
+            if (player.body) {
+                player.body.enable = true;
+                // Disable gravity to prevent drift
+                player.body.setAllowGravity(false);
+            }
+            
+            // Reset velocities to prevent strange movement
+            player.setVelocity(0, 0);
+            
+            // Create blinking effect for invincibility
             this.tweens.add({
                 targets: player,
-                alpha: 0.5,
+                alpha: 0.4,
                 duration: 200,
                 yoyo: true,
-                repeat: 4,
+                repeat: 5,
                 onComplete: () => {
                     if (player && player.active) {
                         player.alpha = 1;
