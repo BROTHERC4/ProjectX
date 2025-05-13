@@ -582,46 +582,102 @@ export class Start extends Phaser.Scene {
         if (this.lives <= 0) {
             this.handleGameOver();
         } else {
-            // Clear ALL enemy bullets for safety
-            this.clearAllEnemyBullets();
-            
-            // Force player to be visible and active
-            player.setActive(true);
-            player.setVisible(true);
-            
-            // Force the player to use the normal ship texture (in case it's using a damaged texture)
-            player.setTexture('ship');
-            
-            // Reset position to a safe location
-            player.x = 400;
-            player.y = 550; // Always use a fixed Y for safety
-            
-            // Important: Make sure physics body is still enabled
-            if (player.body) {
-                player.body.enable = true;
-                // Disable gravity to prevent drift
-                player.body.setAllowGravity(false);
-            }
-            
-            // Reset velocities to prevent strange movement
-            player.setVelocity(0, 0);
-            
-            // Create blinking effect for invincibility
-            this.tweens.add({
-                targets: player,
-                alpha: 0.4,
-                duration: 200,
-                yoyo: true,
-                repeat: 5,
-                onComplete: () => {
-                    if (player && player.active) {
-                        player.alpha = 1;
-                        this.playerInvincible = false;
-                        if (this.DEBUG) console.log("Player invincibility ended, position:", player.x, player.y);
-                    }
+            try {
+                // Clear ALL enemy bullets for safety
+                this.clearAllEnemyBullets();
+                
+                // Force player to be visible and active
+                player.setActive(true);
+                player.setVisible(true);
+                
+                // Reset position to a safe location
+                player.x = 400;
+                player.y = 550; // Always use a fixed Y for safety
+                
+                // Important: Make sure physics body is still enabled
+                if (player.body) {
+                    player.body.enable = true;
+                    // Disable gravity to prevent drift
+                    player.body.setAllowGravity(false);
                 }
-            });
+                
+                // Reset velocities to prevent strange movement
+                player.setVelocity(0, 0);
+                
+                // Create blinking effect for invincibility
+                this.tweens.add({
+                    targets: player,
+                    alpha: 0.4,
+                    duration: 200,
+                    yoyo: true,
+                    repeat: 5,
+                    onComplete: () => {
+                        if (player && player.active) {
+                            player.alpha = 1;
+                            this.playerInvincible = false;
+                            if (this.DEBUG) console.log("Player invincibility ended, position:", player.x, player.y);
+                        }
+                    }
+                });
+            } catch (error) {
+                if (this.DEBUG) console.error("Error in player recovery:", error);
+                
+                // Emergency player recovery
+                this.emergencyPlayerRecovery();
+            }
         }
+    }
+
+    emergencyPlayerRecovery() {
+        // If the player object is in a bad state, recreate it
+        if (this.DEBUG) console.log("Emergency player recovery triggered");
+        
+        if (this.player) {
+            // Try to destroy the player if it exists
+            try {
+                this.player.destroy();
+            } catch (error) {
+                // Ignore errors during emergency cleanup
+            }
+        }
+        
+        // Create a new player sprite
+        this.player = this.physics.add.sprite(400, 550, 'ship');
+        this.player.setScale(0.15);
+        this.player.setCollideWorldBounds(true);
+        
+        // Recreate colliders
+        if (this.colliders.enemyBulletPlayer) {
+            try {
+                this.colliders.enemyBulletPlayer.destroy();
+            } catch (error) {
+                // Ignore errors during emergency cleanup
+            }
+        }
+        
+        // Recreate the collider
+        this.colliders.enemyBulletPlayer = this.physics.add.overlap(
+            this.enemyBullets, this.player, this.enemyBulletHitPlayer, null, this
+        );
+        
+        // Set invincibility
+        this.playerInvincible = true;
+        
+        // Create blinking effect
+        this.tweens.add({
+            targets: this.player,
+            alpha: 0.4,
+            duration: 200,
+            yoyo: true,
+            repeat: 5,
+            onComplete: () => {
+                if (this.player && this.player.active) {
+                    this.player.alpha = 1;
+                    this.playerInvincible = false;
+                    if (this.DEBUG) console.log("Emergency recovery invincibility ended");
+                }
+            }
+        });
     }
 
     handleGameOver() {
