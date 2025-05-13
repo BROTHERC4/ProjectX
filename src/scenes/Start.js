@@ -126,7 +126,7 @@ export class Start extends Phaser.Scene {
         this.lastFired = 0;
         this.fireRate = 200;
         this.enemyDirection = 1; // 1 for right, -1 for left
-        this.enemySpeed = 50;
+        this.enemySpeed = 35; // Slightly slower than before
         this.enemyMoveDown = false;
         this.enemyShotTime = 0;
     }
@@ -291,7 +291,7 @@ export class Start extends Phaser.Scene {
         // Wasp row (top row) - fastest, zigzag pattern
         for (let i = 0; i < 8; i++) {
             const wasp = this.wasps.create(100 + i * 80, 80, 'wasp-sheet');
-            wasp.setScale(1.5); // Even larger size
+            wasp.setScale(1.5); // Wasp size unchanged
             wasp.health = 1;
             wasp.points = 50;
             wasp.originalX = wasp.x;
@@ -304,9 +304,8 @@ export class Start extends Phaser.Scene {
         
         // Large jellyfish row (second row) - slowest, highest health
         for (let i = 0; i < 8; i++) {
-            // Try to use spritesheet if it's correctly loaded, otherwise fallback to frame animation
             const jellyLarge = this.jellyfishLarge.create(100 + i * 80, 150, 'jellyfish-large1');
-            jellyLarge.setScale(1.7); // Even larger size
+            jellyLarge.setScale(2.0); // Slightly bigger
             jellyLarge.health = 3;
             jellyLarge.points = 30;
             jellyLarge.originalX = jellyLarge.x;
@@ -320,7 +319,7 @@ export class Start extends Phaser.Scene {
         // Medium jellyfish row (third row) - medium movement and health
         for (let i = 0; i < 8; i++) {
             const jellyMed = this.jellyfishMedium.create(100 + i * 80, 220, 'jellyfish-medium1');
-            jellyMed.setScale(1.4); // Even larger size
+            jellyMed.setScale(1.7); // Slightly bigger
             jellyMed.health = 2;
             jellyMed.points = 20;
             jellyMed.originalX = jellyMed.x;
@@ -333,7 +332,7 @@ export class Start extends Phaser.Scene {
         // Tiny jellyfish row (bottom row) - fast, less health
         for (let i = 0; i < 8; i++) {
             const jellyTiny = this.jellyfishTiny.create(100 + i * 80, 290, 'jellyfish-tiny1');
-            jellyTiny.setScale(1.2); // Even larger size
+            jellyTiny.setScale(1.4); // Slightly bigger
             jellyTiny.health = 1;
             jellyTiny.points = 10;
             jellyTiny.originalX = jellyTiny.x;
@@ -348,10 +347,8 @@ export class Start extends Phaser.Scene {
     updateEnemies(time, delta) {
         let moveDown = false;
         let moveSpeed = this.enemySpeed * delta / 1000;
-        // Only update living enemies
-        this.enemies.children.entries = this.enemies.children.entries.filter(enemy => enemy.active);
         this.enemies.children.entries.forEach(enemy => {
-            if (!enemy.active) return; // skip dead enemies
+            if (!enemy.active) return;
             if ((enemy.x < 50 && this.enemyDirection < 0) || 
                 (enemy.x > 750 && this.enemyDirection > 0)) {
                 moveDown = true;
@@ -372,21 +369,27 @@ export class Start extends Phaser.Scene {
                     enemy.moveTimer += delta;
                     enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 300) * 15;
                     // Only wasps (zigzag) can shoot
-                    if (Phaser.Math.Between(0, 5000) < 5 * delta) {
-                        this.enemyShoot(enemy);
+                    if (!enemy.lastShotTime || time - enemy.lastShotTime > 1250) { // 25% slower
+                        if (Phaser.Math.Between(0, 5000) < 5 * delta) {
+                            this.enemyShoot(enemy);
+                            enemy.lastShotTime = time;
+                        }
                     }
                     break;
                 case 'sineWave':
                     enemy.moveTimer += delta;
-                    enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 800) * 20;
+                    enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 800) * 20 + 0.03 * delta; // Slowly lower
                     break;
                 case 'swooping':
                     enemy.moveTimer += delta;
                     if (enemy.moveTimer > 3000) {
-                        enemy.y = enemy.originalY + Math.max(0, Math.sin(enemy.moveTimer / 500) * 30);
+                        enemy.y = enemy.originalY + Math.max(0, Math.sin(enemy.moveTimer / 500) * 30) + 0.03 * delta; // Slowly lower
+                    } else {
+                        enemy.y += 0.03 * delta; // Slowly lower
                     }
                     break;
                 case 'standard':
+                    enemy.y += 0.03 * delta; // Slowly lower
                     break;
             }
         });
@@ -419,7 +422,7 @@ export class Start extends Phaser.Scene {
     }
     
     bulletHitEnemy(bullet, enemy) {
-        console.log('bulletHitEnemy called', enemy, bullet);
+        if (!bullet.active) return; // Prevent double hits in the same frame
         // Deactivate the bullet
         bullet.setActive(false);
         bullet.setVisible(false);
