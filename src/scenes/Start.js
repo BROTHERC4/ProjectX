@@ -534,36 +534,31 @@ export class Start extends Phaser.Scene {
         
         // Flash the effect sprite instead of the player
         let flashCount = 0;
-        const flashInterval = setInterval(() => {
-            flashEffect.setVisible(!flashEffect.visible);
+        const flashPlayer = () => {
+            // Toggle visibility
+            player.setAlpha(player.alpha === 1 ? 0.3 : 1);
             flashCount++;
             
-            // Follow player position
-            if (this.player && this.player.active) {
-                flashEffect.x = this.player.x;
-                flashEffect.y = this.player.y;
-            }
-            
-            if (flashCount >= 10) {
-                clearInterval(flashInterval);
-                flashEffect.destroy();
+            if (flashCount < 10) {
+                // Continue flashing
+                this.time.delayedCall(100, flashPlayer);
+            } else {
+                // End of flashing sequence
+                player.setAlpha(1);
                 
-                // Only reposition player without messing with its properties
-                if (this.player && this.player.active) {
-                    this.player.x = 400;
-                    
-                    // End invincibility after a short delay
+                // Check if game over
+                if (this.lives <= 0) {
+                    this.handleGameOver();
+                } else {
+                    // End invincibility after delay (do not reset player.x)
                     this.time.delayedCall(500, () => {
                         this.playerInvincible = false;
-                        console.log("Player invincibility ended");
+                        if (this.DEBUG) console.log("Player invincibility ended");
                     });
                 }
             }
-        }, 100);
-        
-        // Force-ensure player is visible and active (don't touch alpha)
-        player.setVisible(true);
-        player.setActive(true);
+        };
+        // ... existing code ...
     }
 
     handleGameOver() {
