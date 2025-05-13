@@ -458,6 +458,21 @@ export class Start extends Phaser.Scene {
     enemyShoot(enemy) {
         const bullet = this.enemyBullets.get(enemy.x, enemy.y + 20);
         if (bullet) {
+            // Check if bullet is spawning too close to the player
+            if (this.player && this.player.active) {
+                const distToPlayer = Phaser.Math.Distance.Between(
+                    bullet.x, bullet.y, 
+                    this.player.x, this.player.y
+                );
+                
+                // If bullet is too close to player (especially during invincibility), destroy it
+                if (distToPlayer < 50 || this.playerInvincible) {
+                    bullet.setActive(false);
+                    bullet.setVisible(false);
+                    return;
+                }
+            }
+            
             bullet.setActive(true);
             bullet.setVisible(true);
             bullet.setVelocityY(250); // Increased bullet speed
