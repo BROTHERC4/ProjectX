@@ -111,7 +111,7 @@ export class Start extends Phaser.Scene {
         this.wasps = this.physics.add.group();
 
         // Add all enemies to a combined group for easier collision detection
-        this.enemies = this.add.group();
+        this.enemies = this.physics.add.group();
 
         // Create the enemies
         this.createEnemies();
@@ -419,6 +419,7 @@ export class Start extends Phaser.Scene {
     }
     
     bulletHitEnemy(bullet, enemy) {
+        console.log('bulletHitEnemy called', enemy, bullet);
         // Deactivate the bullet
         bullet.setActive(false);
         bullet.setVisible(false);
@@ -434,7 +435,7 @@ export class Start extends Phaser.Scene {
         // If health is zero, destroy the enemy
         if (enemy.health <= 0) {
             // Add points to score (use enemy.points)
-            this.score += enemy.points || 10;
+            this.score += (enemy.points !== undefined ? enemy.points : 10);
             this.scoreText.setText('Score: ' + this.score);
             // Create destruction effect
             this.createExplosion(enemy.x, enemy.y);
@@ -470,10 +471,9 @@ export class Start extends Phaser.Scene {
     }
     
     createExplosion(x, y) {
-        // Create a simple particle explosion effect
-        const particles = this.add.particles('barrier-piece');
-        
-        const emitter = particles.createEmitter({
+        // Use the new Phaser 3.60+ particle API
+        const manager = this.add.particles('barrier-piece');
+        const emitter = manager.createEmitter({
             x: x,
             y: y,
             speed: { min: -100, max: 100 },
@@ -481,15 +481,12 @@ export class Start extends Phaser.Scene {
             scale: { start: 1, end: 0 },
             blendMode: 'ADD',
             lifespan: 500,
-            gravityY: 300
+            gravityY: 300,
+            quantity: 15
         });
-        
-        // Emit particles then destroy the emitter
-        emitter.explode(15);
-        
-        // Self-destruct the particle manager after a delay
+        emitter.explode(15, x, y);
         this.time.delayedCall(1000, () => {
-            particles.destroy();
+            manager.destroy();
         });
     }
 }
