@@ -85,6 +85,9 @@ export class Start extends Phaser.Scene {
         this.livesGroup = this.add.group();
         this.updateLivesDisplay();
 
+        // Invincibility flag
+        this.playerInvincible = false;
+
         // Create game over text (initially hidden)
         this.gameOverText = this.add.text(400, 200, 'GAME OVER', {
             fontSize: '64px',
@@ -489,7 +492,10 @@ export class Start extends Phaser.Scene {
     }
 
     enemyBulletHitPlayer(bullet, player) {
-        if (!bullet.active) return; // Prevent multiple hits from the same bullet
+        if (!bullet.active || this.playerInvincible) return; // Prevent multiple hits or invincible
+        
+        // Set invincibility
+        this.playerInvincible = true;
         
         // Deactivate the bullet immediately
         bullet.setActive(false);
@@ -520,9 +526,10 @@ export class Start extends Phaser.Scene {
                     this.player.destroy();
                     this.player = null;
                 } else {
-                    // Reset position
+                    // Reset position and remove invincibility
                     player.x = 400;
                     player.alpha = 1;
+                    this.playerInvincible = false;
                 }
             }
         });
