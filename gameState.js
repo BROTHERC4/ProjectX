@@ -24,9 +24,16 @@ function handlePlayerInput(playerId, input) {
   let playerRoom = null;
   let roomId = null;
   
+  // Get all rooms
+  const allRooms = getRoomData();
+  if (!allRooms) {
+    // No rooms exist, so ignore input (likely single player mode)
+    return null;
+  }
   // Search through all rooms to find the player
-  Object.keys(getRoomData()).forEach(id => {
+  Object.keys(allRooms).forEach(id => {
     const room = getRoomData(id);
+    if (!room) return;
     const playerIndex = room.players.findIndex(p => p.id === playerId);
     
     if (playerIndex >= 0) {
