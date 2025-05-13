@@ -6,7 +6,21 @@ class MenuScene extends Phaser.Scene {
     super('MenuScene');
   }
 
+  init(data) {
+    // Check if there's an error passed from another scene
+    this.errorMessage = data ? data.error : null;
+  }
+
   preload() {
+    // Set up loading error handler
+    this.load.on('loaderror', (fileObj) => {
+      if (typeof debugLog !== 'undefined') {
+        debugLog('Error loading asset in MenuScene: ' + fileObj.src);
+      }
+      console.error('Error loading asset:', fileObj.src);
+      this.errorMessage = `Failed to load game asset: ${fileObj.key}`;
+    });
+
     // Load assets
     this.load.image('background', 'assets/space.png');
     this.load.image('logo', 'assets/logo.png');
@@ -80,6 +94,11 @@ class MenuScene extends Phaser.Scene {
     
     // Setup socket client event handlers
     this.setupSocketHandlers();
+
+    // Show error if one was passed to the scene
+    if (this.errorMessage) {
+      this.showError(this.errorMessage);
+    }
   }
   
   setupSocketHandlers() {
