@@ -348,32 +348,27 @@ export class Start extends Phaser.Scene {
     updateEnemies(time, delta) {
         let moveDown = false;
         let moveSpeed = this.enemySpeed * delta / 1000;
-        
-        // Check if any enemy is at screen edge
+        // Only update living enemies
+        this.enemies.children.entries = this.enemies.children.entries.filter(enemy => enemy.active);
         this.enemies.children.entries.forEach(enemy => {
+            if (!enemy.active) return; // skip dead enemies
             if ((enemy.x < 50 && this.enemyDirection < 0) || 
                 (enemy.x > 750 && this.enemyDirection > 0)) {
                 moveDown = true;
             }
         });
-        
         if (moveDown) {
-            // Reverse direction and move down
             this.enemyDirection *= -1;
             this.enemies.children.entries.forEach(enemy => {
+                if (!enemy.active) return;
                 enemy.y += 20;
             });
         }
-        
-        // Move enemies based on their specific patterns
         this.enemies.children.entries.forEach(enemy => {
-            // Base horizontal movement for all enemies
+            if (!enemy.active) return;
             enemy.x += moveSpeed * this.enemyDirection;
-            
-            // Apply specific movement patterns based on enemy type
             switch(enemy.movePattern) {
                 case 'zigzag':
-                    // Wasp zigzag movement
                     enemy.moveTimer += delta;
                     enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 300) * 15;
                     // Only wasps (zigzag) can shoot
@@ -382,20 +377,16 @@ export class Start extends Phaser.Scene {
                     }
                     break;
                 case 'sineWave':
-                    // Large jellyfish sine wave movement
                     enemy.moveTimer += delta;
                     enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 800) * 20;
                     break;
                 case 'swooping':
-                    // Tiny jellyfish swooping movement
                     enemy.moveTimer += delta;
                     if (enemy.moveTimer > 3000) {
                         enemy.y = enemy.originalY + Math.max(0, Math.sin(enemy.moveTimer / 500) * 30);
                     }
                     break;
                 case 'standard':
-                    // Medium jellyfish standard Space Invaders movement
-                    // Just the basic horizontal movement with occasional steps down
                     break;
             }
         });
@@ -431,10 +422,8 @@ export class Start extends Phaser.Scene {
         // Deactivate the bullet
         bullet.setActive(false);
         bullet.setVisible(false);
-        
         // Reduce enemy health
         enemy.health--;
-        
         // Flash the enemy to indicate hit
         this.tweens.add({
             targets: enemy,
@@ -442,17 +431,19 @@ export class Start extends Phaser.Scene {
             duration: 50,
             yoyo: true
         });
-        
         // If health is zero, destroy the enemy
         if (enemy.health <= 0) {
-            // Add points to score
-            this.score += enemy.points;
+            // Add points to score (use enemy.points)
+            this.score += enemy.points || 10;
             this.scoreText.setText('Score: ' + this.score);
-            
             // Create destruction effect
             this.createExplosion(enemy.x, enemy.y);
-            
-            // Remove the enemy
+            // Remove the enemy from all groups and destroy
+            this.enemies.remove(enemy, true, true);
+            if (enemy.movePattern === 'zigzag') this.wasps.remove(enemy, true, true);
+            if (enemy.movePattern === 'sineWave') this.jellyfishLarge.remove(enemy, true, true);
+            if (enemy.movePattern === 'standard') this.jellyfishMedium.remove(enemy, true, true);
+            if (enemy.movePattern === 'swooping') this.jellyfishTiny.remove(enemy, true, true);
             enemy.destroy();
         }
     }
