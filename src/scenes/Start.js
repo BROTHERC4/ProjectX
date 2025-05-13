@@ -492,51 +492,61 @@ export class Start extends Phaser.Scene {
     }
 
     enemyBulletHitPlayer(bullet, player) {
-        if (!bullet.active || this.playerInvincible) return; // Prevent multiple hits or invincible
+        // If bullet is inactive or player is invincible, ignore collision
+        if (!bullet.active || this.playerInvincible) return;
         
-        // Set invincibility
+        // Make player invincible to prevent multiple hits
         this.playerInvincible = true;
         
-        // Deactivate the bullet immediately
+        // Handle the bullet
         bullet.setActive(false);
         bullet.setVisible(false);
-        bullet.destroy(); // Ensure bullet is completely removed
+        bullet.destroy();
         
-        // Reduce lives
+        // Reduce player lives
         this.lives--;
         this.updateLivesDisplay();
         
-        // Flash the player
+        // If no lives left, handle game over
+        if (this.lives <= 0) {
+            // Show game over state
+            this.gameOverText.setVisible(true);
+            this.finalScoreText.setText(`Final Score: ${this.score}`).setVisible(true);
+            this.restartText.setVisible(true);
+            
+            // Destroy player
+            player.destroy();
+            this.player = null;
+            return; // Exit early - no need to run animation for dead player
+        }
+        
+        // Handle hit animation for player with remaining lives
+        // 1. Keep body enabled but temporarily stop player movement
+        const currentVelocity = player.body.velocity.clone();
+        player.setVelocity(0, 0);
+        
+        // 2. Flash the player (without disabling physics)
         this.tweens.add({
             targets: player,
-            alpha: 0.5,
+            alpha: 0.2,
             duration: 100,
             yoyo: true,
-            repeat: 3,
-            onStart: () => {
-                // Temporarily disable physics body during animation
-                player.body.enable = false;
-            },
+            repeat: 5,
             onComplete: () => {
-                if (this.lives <= 0) {
-                    // Show game over state
-                    this.gameOverText.setVisible(true);
-                    this.finalScoreText.setText(`Final Score: ${this.score}`).setVisible(true);
-                    this.restartText.setVisible(true);
-                    
-                    // Disable player controls and destroy player
-                    this.player.setActive(false);
-                    this.player.setVisible(false);
-                    this.player.destroy();
-                    this.player = null;
-                } else {
-                    // Reset position and remove invincibility
-                    player.x = 400;
-                    player.alpha = 1;
-                    player.setActive(true); // Make sure player is active
-                    this.playerInvincible = false;
-                    player.body.enable = true; // Re-enable physics body
-                }
+                // Reset player state after animation
+                player.alpha = 1;
+                player.x = 400; // Reset position
+                this.playerInvincible = false;
+            }
+        });
+        
+        // 3. Add a short delay before re-enabling player control to prevent immediate second hit
+        this.time.delayedCall(1000, () => {
+            // Make absolutely sure the player is fully restored if it still exists
+            if (this.player && this.player.active) {
+                this.player.setActive(true);
+                this.player.setVisible(true);
+                this.player.alpha = 1;
             }
         });
     }
