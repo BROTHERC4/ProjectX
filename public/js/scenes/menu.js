@@ -11,8 +11,7 @@ class MenuScene extends Phaser.Scene {
     this.load.image('background', 'assets/space.png');
     this.load.image('logo', 'assets/logo.png');
     
-    // Load custom font
-    this.load.bitmapFont('arcade', 'assets/fonts/arcade.png', 'assets/fonts/arcade.xml');
+    // We're using Google Fonts instead of bitmap fonts now
   }
 
   create() {
@@ -21,7 +20,7 @@ class MenuScene extends Phaser.Scene {
     
     // Add logo or title
     const title = this.add.text(400, 100, 'ProjectX Multiplayer', {
-      fontFamily: 'Arial',
+      fontFamily: '"Orbitron", sans-serif',
       fontSize: 48,
       color: '#ffffff',
       stroke: '#333333',
@@ -34,7 +33,7 @@ class MenuScene extends Phaser.Scene {
     
     // Create buttons
     const buttonStyle = {
-      fontFamily: 'Arial',
+      fontFamily: '"Press Start 2P", cursive',
       fontSize: 24,
       color: '#ffffff',
       backgroundColor: '#222266',
@@ -143,7 +142,7 @@ class MenuScene extends Phaser.Scene {
     
     // Title
     const titleText = this.add.text(0, -120, title, {
-      fontFamily: 'Arial',
+      fontFamily: '"Orbitron", sans-serif',
       fontSize: 28,
       color: '#ffffff'
     }).setOrigin(0.5);
@@ -151,7 +150,7 @@ class MenuScene extends Phaser.Scene {
     
     // Name input label
     const nameLabel = this.add.text(-150, -60, 'Your Name:', {
-      fontFamily: 'Arial',
+      fontFamily: '"Roboto", sans-serif',
       fontSize: 20,
       color: '#ffffff'
     }).setOrigin(0, 0.5);
@@ -169,6 +168,7 @@ class MenuScene extends Phaser.Scene {
       background-color: #111133;
       color: white;
       font-size: 16px;
+      font-family: 'Roboto', sans-serif;
     `;
     nameInput.value = 'Player';
     document.getElementById('game-container').appendChild(nameInput);
@@ -178,7 +178,7 @@ class MenuScene extends Phaser.Scene {
     
     // Create room button
     const createButton = this.add.text(0, 40, 'Create', {
-      fontFamily: 'Arial',
+      fontFamily: '"Press Start 2P", cursive',
       fontSize: 20,
       backgroundColor: '#222266',
       color: '#ffffff',
@@ -196,7 +196,7 @@ class MenuScene extends Phaser.Scene {
     
     // Back button
     const backButton = this.add.text(0, 100, 'Back to Menu', {
-      fontFamily: 'Arial',
+      fontFamily: '"Roboto", sans-serif',
       fontSize: 18,
       color: '#aaaaaa'
     })
@@ -213,7 +213,7 @@ class MenuScene extends Phaser.Scene {
     
     // Error message (initially empty)
     const errorText = this.add.text(0, 150, '', {
-      fontFamily: 'Arial',
+      fontFamily: '"Roboto", sans-serif',
       fontSize: 16,
       color: '#ff0000'
     }).setOrigin(0.5);
@@ -233,7 +233,7 @@ class MenuScene extends Phaser.Scene {
     
     // Title
     const titleText = this.add.text(0, -120, 'Join Game', {
-      fontFamily: 'Arial',
+      fontFamily: '"Orbitron", sans-serif',
       fontSize: 28,
       color: '#ffffff'
     }).setOrigin(0.5);
@@ -241,7 +241,7 @@ class MenuScene extends Phaser.Scene {
     
     // Name input
     const nameLabel = this.add.text(-150, -70, 'Your Name:', {
-      fontFamily: 'Arial',
+      fontFamily: '"Roboto", sans-serif',
       fontSize: 20,
       color: '#ffffff'
     }).setOrigin(0, 0.5);
@@ -258,6 +258,7 @@ class MenuScene extends Phaser.Scene {
       background-color: #111133;
       color: white;
       font-size: 16px;
+      font-family: 'Roboto', sans-serif;
     `;
     nameInput.value = 'Player';
     document.getElementById('game-container').appendChild(nameInput);
@@ -267,7 +268,7 @@ class MenuScene extends Phaser.Scene {
     
     // Room code input
     const roomLabel = this.add.text(-150, 0, 'Room Code:', {
-      fontFamily: 'Arial',
+      fontFamily: '"Roboto", sans-serif',
       fontSize: 20,
       color: '#ffffff'
     }).setOrigin(0, 0.5);
@@ -286,6 +287,7 @@ class MenuScene extends Phaser.Scene {
       color: white;
       font-size: 16px;
       text-transform: uppercase;
+      font-family: 'Roboto', sans-serif;
     `;
     document.getElementById('game-container').appendChild(roomInput);
     
@@ -294,7 +296,7 @@ class MenuScene extends Phaser.Scene {
     
     // Join button
     const joinButton = this.add.text(0, 70, 'Join', {
-      fontFamily: 'Arial',
+      fontFamily: '"Press Start 2P", cursive',
       fontSize: 20,
       backgroundColor: '#222266',
       color: '#ffffff',
@@ -319,7 +321,7 @@ class MenuScene extends Phaser.Scene {
     
     // Back button
     const backButton = this.add.text(0, 130, 'Back to Menu', {
-      fontFamily: 'Arial',
+      fontFamily: '"Roboto", sans-serif',
       fontSize: 18,
       color: '#aaaaaa'
     })
@@ -337,7 +339,7 @@ class MenuScene extends Phaser.Scene {
     
     // Error message (initially empty)
     const errorText = this.add.text(0, 180, '', {
-      fontFamily: 'Arial',
+      fontFamily: '"Roboto", sans-serif',
       fontSize: 16,
       color: '#ff0000'
     }).setOrigin(0.5);

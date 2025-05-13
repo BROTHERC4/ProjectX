@@ -26,21 +26,21 @@ class LobbyScene extends Phaser.Scene {
     
     // Title text
     this.add.text(400, 50, 'Game Lobby', {
-      fontFamily: 'Arial',
+      fontFamily: '"Orbitron", sans-serif',
       fontSize: 36,
       color: '#ffffff'
     }).setOrigin(0.5);
     
     // Room code text
     this.add.text(400, 100, `Room Code: ${this.roomId}`, {
-      fontFamily: 'Arial',
+      fontFamily: '"Press Start 2P", cursive',
       fontSize: 24,
       color: '#ffff00'
     }).setOrigin(0.5);
     
     // Players list title
     this.add.text(400, 150, 'Players', {
-      fontFamily: 'Arial',
+      fontFamily: '"Orbitron", sans-serif',
       fontSize: 24,
       color: '#ffffff'
     }).setOrigin(0.5);
@@ -51,7 +51,7 @@ class LobbyScene extends Phaser.Scene {
     // Create ready button
     const readyButtonText = 'Ready';
     this.readyButton = this.add.text(400, 450, readyButtonText, {
-      fontFamily: 'Arial',
+      fontFamily: '"Press Start 2P", cursive',
       fontSize: 22,
       backgroundColor: '#222266',
       color: '#ffffff',
@@ -66,7 +66,7 @@ class LobbyScene extends Phaser.Scene {
     // Only the host can start the game
     if (this.isHost) {
       this.startButton = this.add.text(400, 520, 'Start Game', {
-        fontFamily: 'Arial',
+        fontFamily: '"Press Start 2P", cursive',
         fontSize: 22,
         backgroundColor: '#662222',
         color: '#ffffff',
@@ -81,7 +81,7 @@ class LobbyScene extends Phaser.Scene {
     
     // Status text (for error messages or notifications)
     this.statusText = this.add.text(400, 570, '', {
-      fontFamily: 'Arial',
+      fontFamily: '"Roboto", sans-serif',
       fontSize: 18,
       color: '#ff0000'
     }).setOrigin(0.5);
@@ -146,7 +146,7 @@ class LobbyScene extends Phaser.Scene {
       
       // Player name
       const nameText = this.add.text(-100, yPos, player.name, {
-        fontFamily: 'Arial',
+        fontFamily: '"Roboto", sans-serif',
         fontSize: 18,
         color: player.id === this.playerId ? '#ffff00' : '#ffffff'
       }).setOrigin(0, 0.5);
@@ -155,7 +155,7 @@ class LobbyScene extends Phaser.Scene {
       let hostText = null;
       if (player.id === window.socketClient.hostId) {
         hostText = this.add.text(40, yPos, 'HOST', {
-          fontFamily: 'Arial',
+          fontFamily: '"Roboto", sans-serif',
           fontSize: 14,
           color: '#ff9900'
         }).setOrigin(0, 0.5);
@@ -163,7 +163,7 @@ class LobbyScene extends Phaser.Scene {
       
       // Ready status
       const readyText = this.add.text(120, yPos, player.ready ? 'READY' : 'NOT READY', {
-        fontFamily: 'Arial',
+        fontFamily: '"Roboto", sans-serif',
         fontSize: 16,
         color: player.ready ? '#00ff00' : '#ff0000'
       }).setOrigin(0, 0.5);

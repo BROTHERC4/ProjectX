@@ -182,7 +182,7 @@ class StartScene extends Phaser.Scene {
       
       // Create or update score text
       const scoreText = this.add.text(xPos, 30, `${player.name}: ${player.score}`, {
-        fontFamily: 'Arial',
+        fontFamily: '"Roboto", sans-serif',
         fontSize: '18px',
         color: player.id === this.playerId ? '#ffff00' : '#ffffff'
       }).setOrigin(0, 0.5);
@@ -214,25 +214,25 @@ class StartScene extends Phaser.Scene {
     this.gameOverText = this.add.text(400, 200, 'GAME OVER', {
       fontSize: '64px',
       fill: '#fff',
-      fontFamily: 'Arial'
+      fontFamily: '"Press Start 2P", cursive'
     }).setOrigin(0.5).setVisible(false);
 
     this.finalScoreText = this.add.text(400, 300, '', {
       fontSize: '32px',
       fill: '#fff',
-      fontFamily: 'Arial'
+      fontFamily: '"Roboto", sans-serif'
     }).setOrigin(0.5).setVisible(false);
 
     this.winnerText = this.add.text(400, 350, '', {
       fontSize: '32px',
       fill: '#fff',
-      fontFamily: 'Arial'
+      fontFamily: '"Orbitron", sans-serif'
     }).setOrigin(0.5).setVisible(false);
 
     this.backToLobbyText = this.add.text(400, 450, 'Back to Lobby', {
       fontSize: '24px',
       fill: '#fff',
-      fontFamily: 'Arial',
+      fontFamily: '"Press Start 2P", cursive',
       backgroundColor: '#222266',
       padding: { left: 20, right: 20, top: 10, bottom: 10 }
     })
