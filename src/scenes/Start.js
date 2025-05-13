@@ -68,6 +68,9 @@ export class Start extends Phaser.Scene {
     }
 
     create() {
+        // Game state flags
+        this.gameOver = false;
+
         // Create animations for the enemies
         this.createAnimations();
         
@@ -121,10 +124,6 @@ export class Start extends Phaser.Scene {
         this.player = this.physics.add.sprite(400, 550, 'ship');
         this.player.setScale(0.15);
         this.player.setCollideWorldBounds(true);
-        // Add player collider ONCE
-        this.enemyBulletPlayerCollider = this.physics.add.overlap(
-            this.enemyBullets, this.player, this.enemyBulletHitPlayer, null, this
-        );
 
         // Set up controls
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -155,10 +154,21 @@ export class Start extends Phaser.Scene {
         // Create the enemies
         this.createEnemies();
 
-        // Add collisions
-        this.playerBulletCollider = this.physics.add.collider(this.bullets, this.barrierPieces, this.bulletHitBarrier, null, this);
-        this.enemyBulletBarrierCollider = this.physics.add.collider(this.enemyBullets, this.barrierPieces, this.bulletHitBarrier, null, this);
-        this.bulletEnemyCollider = this.physics.add.overlap(this.bullets, this.enemies, this.bulletHitEnemy, null, this);
+        // Store all colliders
+        this.colliders = {
+            playerBulletBarrier: this.physics.add.collider(
+                this.bullets, this.barrierPieces, this.bulletHitBarrier, null, this
+            ),
+            enemyBulletBarrier: this.physics.add.collider(
+                this.enemyBullets, this.barrierPieces, this.bulletHitBarrier, null, this
+            ),
+            bulletEnemy: this.physics.add.overlap(
+                this.bullets, this.enemies, this.bulletHitEnemy, null, this
+            ),
+            enemyBulletPlayer: this.physics.add.overlap(
+                this.enemyBullets, this.player, this.enemyBulletHitPlayer, null, this
+            )
+        };
 
         // Set up timing variables for game logic
         this.lastFired = 0;
@@ -227,8 +237,13 @@ export class Start extends Phaser.Scene {
         // Background scrolling
         this.background.tilePositionY -= 0.5;
 
-        // Check if player exists and is active and game is not over
-        if (this.player && this.player.active && !this.gameOverText.visible) {
+        // Skip game logic if game is over
+        if (this.gameOver) {
+            return;
+        }
+
+        // Check if player exists and is active
+        if (this.player && this.player.active) {
             // Player movement
             if (this.cursors.left.isDown) {
                 this.player.setVelocityX(-this.playerSpeed);
@@ -386,6 +401,8 @@ export class Start extends Phaser.Scene {
     }
 
     updateEnemies(time, delta) {
+        // Skip if game is over
+        if (this.gameOver) return;
         let moveDown = false;
         let moveSpeed = this.enemySpeed * delta / 1000;
         this.enemies.children.entries.forEach(enemy => {
@@ -437,6 +454,8 @@ export class Start extends Phaser.Scene {
     }
 
     bulletHitBarrier(bullet, barrierPiece) {
+        // Skip if either object is not active
+        if (!bullet.active || !barrierPiece.active || this.gameOver) return;
         // Deactivate the bullet
         bullet.setActive(false);
         bullet.setVisible(false);
@@ -454,7 +473,8 @@ export class Start extends Phaser.Scene {
     }
     
     bulletHitEnemy(bullet, enemy) {
-        if (!bullet.active) return; // Prevent double hits in the same frame
+        // Skip if either object is not active or game is over
+        if (!bullet.active || !enemy.active || this.gameOver) return;
         // Deactivate the bullet
         bullet.setActive(false);
         bullet.setVisible(false);
@@ -496,8 +516,8 @@ export class Start extends Phaser.Scene {
     }
 
     enemyBulletHitPlayer(bullet, player) {
-        // Skip if bullet not active
-        if (!bullet.active) return;
+        // Skip if bullet not active or player not active or game is over
+        if (!bullet.active || !player.active || this.gameOver) return;
         // Deactivate the bullet
         bullet.setActive(false);
         bullet.setVisible(false);
@@ -505,20 +525,9 @@ export class Start extends Phaser.Scene {
         // Reduce lives
         this.lives--;
         this.updateLivesDisplay();
-        console.log("Player hit! Lives remaining:", this.lives);
+        if (this.DEBUG) console.log("Player hit! Lives remaining:", this.lives);
         if (this.lives <= 0) {
-            this.gameOverText.setVisible(true);
-            this.finalScoreText.setText(`Final Score: ${this.score}`).setVisible(true);
-            this.restartText.setVisible(true);
-            // Remove collider before destroying player
-            if (this.enemyBulletPlayerCollider) {
-                this.enemyBulletPlayerCollider.destroy();
-                this.enemyBulletPlayerCollider = null;
-            }
-            if (this.player) {
-                this.player.destroy();
-                this.player = null;
-            }
+            this.handleGameOver();
         } else {
             // Just reset the player position and briefly set alpha
             player.x = 400;
@@ -533,26 +542,31 @@ export class Start extends Phaser.Scene {
 
     handleGameOver() {
         if (this.DEBUG) console.log("GAME OVER");
-        
+        // Set game over flag
+        this.gameOver = true;
         // Show game over UI
         this.gameOverText.setVisible(true);
         this.finalScoreText.setText(`Final Score: ${this.score}`).setVisible(true);
         this.restartText.setVisible(true);
-        
-        // Disable collision detection with player
-        if (this.player) {
-            this.physics.world.colliders.getActive()
-                .filter(collider => collider.object1 === this.player || collider.object2 === this.player)
-                .forEach(collider => collider.active = false);
-            
-            // Make the player fade out
+        // Destroy all colliders to prevent further collision checks
+        Object.values(this.colliders).forEach(collider => {
+            if (collider && collider.destroy) {
+                collider.destroy();
+            }
+        });
+        // Clear this.colliders object
+        this.colliders = {};
+        // Make the player fade out
+        if (this.player && this.player.active) {
             this.tweens.add({
                 targets: this.player,
                 alpha: 0,
                 duration: 1000,
                 onComplete: () => {
-                    this.player.destroy();
-                    this.player = null;
+                    if (this.player) {
+                        this.player.destroy();
+                        this.player = null;
+                    }
                 }
             });
         }
