@@ -365,6 +365,11 @@ class Start extends Phaser.Scene {
       playerSprite.x = serverPlayer.position.x;
       playerSprite.y = serverPlayer.position.y;
       
+      // Debug log
+      if (this.DEBUG || true) {
+        console.log(`[CLIENT] Player ${serverPlayer.id} pos:`, serverPlayer.position);
+      }
+      
       // Update visibility based on player invincibility
       if (serverPlayer.invincible) {
         playerSprite.alpha = 0.5;
