@@ -25,10 +25,28 @@ class MenuScene extends Phaser.Scene {
     this.load.image('background', 'assets/space.png');
     this.load.image('logo', 'assets/logo.png');
     
-    // We're using Google Fonts instead of bitmap fonts now
+    // Load Google Fonts using WebFont Loader
+    this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
   }
 
   create() {
+    // Wait for WebFont to load before creating menu UI
+    if (window.WebFont) {
+      window.WebFont.load({
+        google: {
+          families: ['Orbitron:400,700', 'Press Start 2P', 'Roboto:400,700']
+        },
+        active: () => {
+          this.createMenuUI();
+        }
+      });
+    } else {
+      // Fallback: create menu UI immediately if WebFont is not available
+      this.createMenuUI();
+    }
+  }
+  
+  createMenuUI() {
     // Add background
     this.add.tileSprite(400, 300, 800, 600, 'background');
     
