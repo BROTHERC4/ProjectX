@@ -15,6 +15,9 @@ window.addEventListener('DOMContentLoaded', function() {
       width: 800,
       height: 600,
       parent: 'game-container',
+      dom: {
+        createContainer: true
+      },
       physics: {
         default: 'arcade',
         arcade: {
