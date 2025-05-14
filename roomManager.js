@@ -16,6 +16,11 @@ const MAX_PLAYERS_PER_ROOM = 4;
 function createRoom(hostId, hostName) {
   const roomId = uuidv4().substring(0, 6).toUpperCase(); // Short room code
   
+  // Assign unique X position for the host (player 0)
+  const numPlayers = MAX_PLAYERS_PER_ROOM;
+  const spacing = 600 / (numPlayers - 1); // Spread across 200 to 800
+  const x = 200;
+  
   rooms[roomId] = {
     id: roomId,
     hostId: hostId,
@@ -25,7 +30,7 @@ function createRoom(hostId, hostName) {
       score: 0,
       lives: 3,
       ready: false,
-      position: { x: 400, y: 550 }
+      position: { x: x, y: 550 }
     }],
     gameInProgress: false,
     gameState: null,
