@@ -33,7 +33,7 @@ class MenuScene extends Phaser.Scene {
     this.add.tileSprite(400, 300, 800, 600, 'background');
     
     // Add logo or title
-    const title = this.add.text(400, 100, 'ProjectX Multiplayer', {
+    const title = this.add.text(400, 100, 'ProjectX', {
       fontFamily: '"Orbitron", sans-serif',
       fontSize: 48,
       color: '#ffffff',
