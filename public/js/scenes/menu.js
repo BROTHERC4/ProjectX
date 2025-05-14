@@ -96,8 +96,16 @@ class MenuScene extends Phaser.Scene {
       .on('pointerout', () => this.buttonOut(singlePlayerButton))
       .on('pointerdown', () => this.startSinglePlayer());
     
+    // Credits button
+    const creditsButton = this.add.text(0, 120, 'Credits', buttonStyle)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover', () => this.buttonHover(creditsButton))
+      .on('pointerout', () => this.buttonOut(creditsButton))
+      .on('pointerdown', () => this.scene.start('CreditsScene'));
+    
     // Add buttons to container
-    menuContainer.add([createButton, joinButton, singlePlayerButton]);
+    menuContainer.add([createButton, joinButton, singlePlayerButton, creditsButton]);
     
     // Create form containers (initially hidden)
     this.createFormContainer = this.createForm('Create Game');

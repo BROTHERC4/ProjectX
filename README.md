@@ -125,6 +125,13 @@ MIT
 
 ## Credits
 
-- Game assets from [Your Asset Source]
+### Assets
+- Wasp sprite by [Spring Spring](https://opengameart.org/content/wasp-0) (CC0 1.0)
+- Jellyfish sprites by [rapidpunches](https://opengameart.org/content/primary-jellies) (CC BY-SA 4.0)
+- Space background from Phaser setup
+- Spaceship sprites generated using GrokAI
+
+### Technologies
 - Built with [Phaser.js](https://phaser.io/)
 - Multiplayer functionality with [Socket.io](https://socket.io/)
+- Server powered by [Express.js](https://expressjs.com/)

@@ -31,7 +31,8 @@ window.addEventListener('DOMContentLoaded', function() {
         SinglePlayerStart,
         LobbyScene,
         GameOverScene,
-        SinglePlayerGameOver
+        SinglePlayerGameOver,
+        CreditsScene
       ]
     };
     
