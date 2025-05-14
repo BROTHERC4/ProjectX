@@ -296,6 +296,16 @@ class Start extends Phaser.Scene {
       // Update enemies
       this.updateEnemies(state.enemies);
       
+      // Handle hit effects
+      if (state.hitEffects) {
+        this.handleHitEffects(state.hitEffects);
+      }
+      
+      // Handle explosions
+      if (state.explosions) {
+        this.handleExplosions(state.explosions);
+      }
+      
       // Update scores and lives
       this.updateScoreboard(state.players);
       
@@ -442,23 +452,28 @@ class Start extends Phaser.Scene {
         // Create new enemy sprite based on type
         let texture;
         let scale;
+        let animKey;
         
         switch (serverEnemy.type) {
           case 'wasp':
             texture = 'wasp-sheet';
             scale = 1.5;
+            animKey = 'wasp-anim';
             break;
           case 'jellyfish-large':
             texture = 'jellyfish-large1';
             scale = 2.0;
+            animKey = 'jellyfish-large-frames';
             break;
           case 'jellyfish-medium':
             texture = 'jellyfish-medium1';
             scale = 1.7;
+            animKey = 'jellyfish-medium-frames';
             break;
           case 'jellyfish-tiny':
             texture = 'jellyfish-tiny1';
             scale = 1.4;
+            animKey = 'jellyfish-tiny-frames';
             break;
           default:
             texture = 'jellyfish-tiny1';
@@ -477,21 +492,20 @@ class Start extends Phaser.Scene {
         // Add to group
         this.enemies.add(enemySprite);
         
-        // Play animation based on type
-        if (serverEnemy.type === 'wasp') {
-          enemySprite.play('wasp-anim');
-        } else if (serverEnemy.type === 'jellyfish-large') {
-          enemySprite.play('jellyfish-large-frames');
-        } else if (serverEnemy.type === 'jellyfish-medium') {
-          enemySprite.play('jellyfish-medium-frames');
-        } else if (serverEnemy.type === 'jellyfish-tiny') {
-          enemySprite.play('jellyfish-tiny-frames');
+        // Play animation
+        if (animKey) {
+          enemySprite.play(animKey);
         }
       }
       
-      // Update position
-      enemySprite.x = serverEnemy.position.x;
-      enemySprite.y = serverEnemy.position.y;
+      // Smoothly update position
+      this.tweens.add({
+        targets: enemySprite,
+        x: serverEnemy.position.x,
+        y: serverEnemy.position.y,
+        duration: 16, // One frame at 60 FPS
+        ease: 'Linear'
+      });
     });
     
     // Remove enemies that no longer exist
@@ -511,11 +525,13 @@ class Start extends Phaser.Scene {
     // Background scrolling
     this.background.tilePositionY -= 0.5;
     
-    // Handle player input and send to server
+    // Handle player input with the same control scheme as singleplayer
     const input = {
       left: this.cursors.left.isDown,
       right: this.cursors.right.isDown,
-      fire: this.fireKey.isDown && !this.playerInvincible
+      fire: this.fireKey.isDown && !this.playerInvincible,
+      // Add precise current time to allow server to calculate exact firing rate
+      time: Date.now()
     };
     
     // Send input to server
@@ -556,21 +572,84 @@ class Start extends Phaser.Scene {
     console.log('Game ended with results:', data);
   }
   
-  createExplosion(x, y) {
+  handleHitEffects(hitEffects) {
+    hitEffects.forEach(effect => {
+      switch (effect.type) {
+        case 'flash':
+          // Flash enemy
+          const enemy = this.enemies.getChildren().find(e => e.enemyId === effect.targetId);
+          if (enemy) {
+            this.tweens.add({
+              targets: enemy,
+              alpha: 0.5,
+              duration: effect.duration / 2,
+              yoyo: true
+            });
+          }
+          break;
+          
+        case 'barrier-hit':
+          // Flash barrier
+          const barrier = this.barrierPieces.getChildren().find(b => b.barrierId === effect.targetId);
+          if (barrier) {
+            this.tweens.add({
+              targets: barrier,
+              alpha: 0.5,
+              duration: effect.duration / 2,
+              yoyo: true
+            });
+          }
+          break;
+          
+        case 'player-hit':
+          // Flash player
+          const player = this.players.getChildren().find(p => p.playerId === effect.targetId);
+          if (player) {
+            this.tweens.add({
+              targets: player,
+              alpha: 0.5,
+              duration: effect.duration / 2,
+              yoyo: true
+            });
+          }
+          break;
+      }
+    });
+  }
+  
+  handleExplosions(explosions) {
+    explosions.forEach(explosion => {
+      // Only create explosions we haven't seen before
+      if (!this.processedExplosions || !this.processedExplosions.includes(explosion.id)) {
+        this.createExplosion(explosion.position.x, explosion.position.y, explosion.type);
+        
+        // Track processed explosions
+        this.processedExplosions = this.processedExplosions || [];
+        this.processedExplosions.push(explosion.id);
+      }
+    });
+    
+    // Clean up old explosion IDs
+    if (this.processedExplosions && this.processedExplosions.length > 100) {
+      this.processedExplosions = this.processedExplosions.slice(-50);
+    }
+  }
+  
+  createExplosion(x, y, type = 'enemy') {
     // Create a particle explosion effect
-    const emitter = this.add.particles(x, y, 'barrier-piece', {
+    const emitter = this.add.particles(x, y, type === 'barrier' ? 'barrier-piece' : 'explosion', {
       speed: { min: -100, max: 100 },
       angle: { min: 0, max: 360 },
       scale: { start: 1, end: 0 },
       blendMode: 'ADD',
       lifespan: 500,
       gravityY: 300,
-      quantity: 15,
+      quantity: type === 'barrier' ? 8 : 15,
       emitting: false
     });
     
     // Emit all particles at once
-    emitter.explode(15);
+    emitter.explode(type === 'barrier' ? 8 : 15);
     
     // Clean up after animation completes
     this.time.delayedCall(1000, () => {

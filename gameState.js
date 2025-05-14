@@ -302,7 +302,7 @@ function updatePlayers(gameState, players, deltaTime) {
     const gamePlayer = gameState.players.find(p => p.id === player.id);
     if (!gamePlayer) return;
     
-    // Move based on input
+    // Move based on input with the SAME speed as singleplayer
     if (player.input.left) {
       gamePlayer.position.x -= PLAYER_SPEED * (deltaTime / 1000);
       // Keep in bounds
@@ -313,10 +313,10 @@ function updatePlayers(gameState, players, deltaTime) {
       if (gamePlayer.position.x > SCREEN_WIDTH - 50) gamePlayer.position.x = SCREEN_WIDTH - 50;
     }
     
-    // Handle shooting
+    // Handle shooting with the SAME fire rate as singleplayer (200ms)
     if (player.input.fire && !gamePlayer.invincible) {
-      // Only fire if cooldown has passed
-      const now = Date.now();
+      // Only fire if cooldown has passed - match singleplayer fire rate
+      const now = player.input.time || Date.now();
       if (!player.lastShot || now - player.lastShot > 200) {
         player.lastShot = now;
         
@@ -385,17 +385,30 @@ function updateEnemies(gameState, deltaTime) {
     // Base horizontal movement
     enemy.position.x += ENEMY_SPEED * (deltaTime / 1000) * gameState.enemyDirection;
     
-    // Add unique movement patterns
+    // Add unique movement patterns matching singleplayer
     switch(enemy.movePattern) {
       case 'zigzag':
         enemy.moveTimer += deltaTime;
         enemy.position.y = enemy.originalPosition.y + Math.sin(enemy.moveTimer / 300) * 15;
         break;
       case 'sineWave':
-      case 'swooping':
+        enemy.moveTimer += deltaTime;
+        // Add slight wave motion to large jellyfish
+        enemy.position.x += Math.sin(enemy.moveTimer / 1000) * 0.5;
+        enemy.position.y += 0.002 * deltaTime; // Slow descent
+        break;
       case 'standard':
-        // Slow vertical descent
-        enemy.position.y += 0.002 * deltaTime;
+        // Medium jellyfish - standard movement
+        enemy.position.y += 0.002 * deltaTime; // Slow descent
+        break;
+      case 'swooping':
+        enemy.moveTimer += deltaTime;
+        // Add swooping motion to tiny jellyfish
+        if (enemy.moveTimer % 5000 < 2500) {
+          enemy.position.y += 0.005 * deltaTime; // Faster descent during swoop
+        } else {
+          enemy.position.y += 0.001 * deltaTime; // Slower descent after swoop
+        }
         break;
     }
   });
@@ -436,16 +449,29 @@ function handleEnemyShooting(gameState) {
  * @param {object} room - Room object
  */
 function checkCollisions(gameState, room) {
-  // Player bullets vs enemies
+  // Player bullets vs enemies - make more precise like singleplayer
   gameState.bullets = gameState.bullets.filter(bullet => {
     let hit = false;
     
     gameState.enemies.forEach(enemy => {
-      // Check collision
-      if (distance(bullet.position, enemy.position) < 20) {
+      // Use more precise collision detection with appropriate hitbox sizes
+      const hitboxSize = enemy.type === 'wasp' ? 25 : 
+                        enemy.type === 'jellyfish-large' ? 30 :
+                        enemy.type === 'jellyfish-medium' ? 20 : 15;
+                        
+      if (distance(bullet.position, enemy.position) < hitboxSize) {
         // Enemy hit
         enemy.health--;
         hit = true;
+        
+        // Flash the enemy visually - send event to clients
+        gameState.hitEffects = gameState.hitEffects || [];
+        gameState.hitEffects.push({
+          id: `hit-${Date.now()}-${enemy.id}`,
+          targetId: enemy.id,
+          type: 'flash',
+          duration: 100
+        });
         
         // If enemy defeated
         if (enemy.health <= 0) {
@@ -462,21 +488,16 @@ function checkCollisions(gameState, room) {
             }
           }
           
+          // Create explosion effect
+          gameState.explosions = gameState.explosions || [];
+          gameState.explosions.push({
+            id: `explosion-${Date.now()}`,
+            position: {...enemy.position},
+            timeLeft: 500
+          });
+          
           // Remove enemy
           gameState.enemies = gameState.enemies.filter(e => e.id !== enemy.id);
-        }
-      }
-    });
-    
-    // Player bullets vs barrier pieces
-    gameState.barriers.forEach(barrier => {
-      if (distance(bullet.position, barrier.position) < 8) {
-        barrier.durability--;
-        hit = true;
-        
-        // Remove barrier if destroyed
-        if (barrier.durability <= 0) {
-          gameState.barriers = gameState.barriers.filter(b => b.id !== barrier.id);
         }
       }
     });
@@ -485,7 +506,7 @@ function checkCollisions(gameState, room) {
     return !hit;
   });
   
-  // Enemy bullets vs barriers
+  // Enemy bullets vs barriers - more precise collision
   gameState.enemyBullets = gameState.enemyBullets.filter(bullet => {
     let hit = false;
     
@@ -494,9 +515,27 @@ function checkCollisions(gameState, room) {
         barrier.durability--;
         hit = true;
         
+        // Create barrier hit effect
+        gameState.hitEffects = gameState.hitEffects || [];
+        gameState.hitEffects.push({
+          id: `hit-${Date.now()}-${barrier.id}`,
+          targetId: barrier.id,
+          type: 'barrier-hit',
+          duration: 100
+        });
+        
         // Remove barrier if destroyed
         if (barrier.durability <= 0) {
           gameState.barriers = gameState.barriers.filter(b => b.id !== barrier.id);
+          
+          // Create barrier destruction effect
+          gameState.explosions = gameState.explosions || [];
+          gameState.explosions.push({
+            id: `explosion-${Date.now()}`,
+            position: {...barrier.position},
+            type: 'barrier',
+            timeLeft: 500
+          });
         }
       }
     });
@@ -505,7 +544,7 @@ function checkCollisions(gameState, room) {
     return !hit;
   });
   
-  // Enemy bullets vs players
+  // Enemy bullets vs players - more precise collision
   gameState.enemyBullets = gameState.enemyBullets.filter(bullet => {
     let hit = false;
     
@@ -513,8 +552,11 @@ function checkCollisions(gameState, room) {
       // Skip if player is invincible
       if (player.invincible) return;
       
+      // Use player-specific hitbox size
+      const hitboxSize = 20;
+      
       // Check collision
-      if (distance(bullet.position, player.position) < 20) {
+      if (distance(bullet.position, player.position) < hitboxSize) {
         hit = true;
         player.lives--;
         
@@ -523,6 +565,15 @@ function checkCollisions(gameState, room) {
         if (roomPlayer) {
           roomPlayer.lives = player.lives;
         }
+        
+        // Create player hit effect
+        gameState.hitEffects = gameState.hitEffects || [];
+        gameState.hitEffects.push({
+          id: `hit-${Date.now()}-${player.id}`,
+          targetId: player.id,
+          type: 'player-hit',
+          duration: 100
+        });
         
         // Make player invincible
         player.invincible = true;
