@@ -52,6 +52,11 @@ function handlePlayerInput(playerId, input) {
   // Update player state based on input (will be applied in game loop)
   player.input = input;
   
+  // Debug log
+  if (process.env.DEBUG || true) {
+    console.log(`[INPUT] Player ${playerId} in room ${roomId} input:`, input);
+  }
+  
   return roomId;
 }
 
@@ -305,22 +310,16 @@ function updatePlayers(gameState, players, deltaTime) {
     // Move based on input with the SAME speed as singleplayer
     if (player.input.left) {
       gamePlayer.position.x -= PLAYER_SPEED * (deltaTime / 1000);
-      // Keep in bounds
       if (gamePlayer.position.x < 50) gamePlayer.position.x = 50;
     } else if (player.input.right) {
       gamePlayer.position.x += PLAYER_SPEED * (deltaTime / 1000);
-      // Keep in bounds
       if (gamePlayer.position.x > SCREEN_WIDTH - 50) gamePlayer.position.x = SCREEN_WIDTH - 50;
     }
-    
     // Handle shooting with the SAME fire rate as singleplayer (200ms)
     if (player.input.fire && !gamePlayer.invincible) {
-      // Only fire if cooldown has passed - match singleplayer fire rate
       const now = player.input.time || Date.now();
       if (!player.lastShot || now - player.lastShot > 200) {
         player.lastShot = now;
-        
-        // Create a new bullet
         gameState.bullets.push({
           id: `bullet-${player.id}-${now}`,
           position: { x: gamePlayer.position.x, y: gamePlayer.position.y - 30 },
@@ -328,6 +327,10 @@ function updatePlayers(gameState, players, deltaTime) {
           playerId: player.id
         });
       }
+    }
+    // Debug log
+    if (process.env.DEBUG || true) {
+      console.log(`[UPDATE] Player ${player.id} pos:`, gamePlayer.position);
     }
   });
 }
