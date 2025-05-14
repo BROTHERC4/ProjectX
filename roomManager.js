@@ -65,6 +65,12 @@ function joinRoom(roomId, playerId, playerName) {
     return { success: true }; // Player already in room
   }
   
+  // Assign unique X position for each player
+  const playerIndex = rooms[roomId].players.length;
+  const numPlayers = MAX_PLAYERS_PER_ROOM;
+  const spacing = 600 / (numPlayers - 1); // Spread across 200 to 800
+  const x = 200 + playerIndex * spacing;
+  
   // Add player to room
   rooms[roomId].players.push({
     id: playerId,
@@ -73,8 +79,7 @@ function joinRoom(roomId, playerId, playerName) {
     lives: 3,
     ready: false,
     position: {
-      // Position depends on player number (1-4)
-      x: 200 + (rooms[roomId].players.length * 150),
+      x: x,
       y: 550
     }
   });
