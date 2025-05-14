@@ -97,6 +97,12 @@ class LobbyScene extends Phaser.Scene {
     
     // Keep track of ready state
     this.isReady = false;
+
+    // Force an initial update with current players
+    if (window.socketClient.players && window.socketClient.players.length > 0) {
+      console.log("Initializing player list with existing players:", window.socketClient.players);
+      this.updatePlayerList(window.socketClient.players);
+    }
   }
   
   setupSocketHandlers() {
@@ -157,9 +163,9 @@ class LobbyScene extends Phaser.Scene {
         color: player.id === this.playerId ? '#ffff00' : '#ffffff'
       }).setOrigin(0, 0.5);
       
-      // Host indicator
+      // Host indicator - use this.isHost and this.playerId
       let hostText = null;
-      if (player.id === window.socketClient.hostId) {
+      if (player.id === this.playerId && this.isHost) {
         hostText = this.add.text(40, yPos, 'HOST', {
           fontFamily: '"Roboto", sans-serif',
           fontSize: 14,
@@ -180,6 +186,8 @@ class LobbyScene extends Phaser.Scene {
         this.playerListContainer.add(hostText);
       }
     });
+    // Log for debugging
+    console.log(`Updated player list with ${players.length} players`);
   }
   
   toggleReady() {
