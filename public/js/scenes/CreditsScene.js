@@ -4,6 +4,8 @@
 class CreditsScene extends Phaser.Scene {
   constructor() {
     super('CreditsScene');
+    this.scrollOffset = 0;
+    this.maxScroll = 0;
   }
 
   preload() {
@@ -48,15 +50,20 @@ class CreditsScene extends Phaser.Scene {
       "Server powered by Express.js (https://expressjs.com/)"
     ];
     
-    const creditContent = this.add.text(400, 180, creditsText, {
+    // Create a container for credits text
+    this.creditsTextObj = this.add.text(400, 180, creditsText, {
       fontFamily: '"Roboto", sans-serif',
       fontSize: 16,
       color: '#ffffff',
       align: 'center',
       lineSpacing: 6
     }).setOrigin(0.5, 0);
-    
-    // Back button
+
+    // Calculate max scroll
+    this.maxScroll = Math.max(0, this.creditsTextObj.height - 320); // 320px visible area
+    this.scrollOffset = 0;
+
+    // Back button (fixed position)
     const backButton = this.add.text(400, 520, 'Back to Menu', {
       fontFamily: '"Press Start 2P", cursive',
       fontSize: 20,
@@ -71,13 +78,33 @@ class CreditsScene extends Phaser.Scene {
       .on('pointerdown', () => {
         this.scene.start('MenuScene');
       });
+
+    // Mouse wheel scroll
+    this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+      this.scrollCredits(deltaY);
+    });
+    // Arrow key scroll
+    this.cursors = this.input.keyboard.createCursorKeys();
   }
   
+  scrollCredits(deltaY) {
+    // Scroll by deltaY (mouse wheel) or +/-20 (arrow keys)
+    this.scrollOffset += deltaY;
+    this.scrollOffset = Phaser.Math.Clamp(this.scrollOffset, 0, this.maxScroll);
+    this.creditsTextObj.y = 180 - this.scrollOffset;
+  }
+
   update() {
     // Animate background
     const bgSprite = this.children.list.find(child => child.type === 'TileSprite');
     if (bgSprite) {
       bgSprite.tilePositionY -= 0.2;
+    }
+    // Arrow key scroll
+    if (this.cursors.up.isDown) {
+      this.scrollCredits(-4);
+    } else if (this.cursors.down.isDown) {
+      this.scrollCredits(4);
     }
   }
 }
