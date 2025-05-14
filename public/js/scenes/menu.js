@@ -191,7 +191,8 @@ class MenuScene extends Phaser.Scene {
     nameInput.value = 'Player';
     document.getElementById('game-container').appendChild(nameInput);
     
-    const nameElement = this.add.dom(50, -60, nameInput);
+    // Move input right of label
+    const nameElement = this.add.dom(80, -60, nameInput);
     container.add(nameElement);
     
     // Create room button
@@ -280,7 +281,8 @@ class MenuScene extends Phaser.Scene {
     nameInput.value = 'Player';
     document.getElementById('game-container').appendChild(nameInput);
     
-    const nameElement = this.add.dom(50, -70, nameInput);
+    // Move input right of label
+    const nameElement = this.add.dom(80, -70, nameInput);
     container.add(nameElement);
     
     // Room code input
@@ -295,6 +297,7 @@ class MenuScene extends Phaser.Scene {
     roomInput.type = 'text';
     roomInput.maxLength = 6;
     roomInput.style = `
+      position: absolute;
       width: 200px;
       padding: 8px;
       border: 2px solid #3333aa;
