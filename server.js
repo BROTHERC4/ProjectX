@@ -57,6 +57,16 @@ io.on('connection', (socket) => {
     }
   });
   
+  // Handle player ready status
+  socket.on('player_ready', ({ roomId, ready }) => {
+    const { setPlayerReady, getRoomData } = require('./roomManager');
+    const success = setPlayerReady(roomId, socket.id, ready);
+    if (success) {
+      const roomData = getRoomData(roomId);
+      io.to(roomId).emit('room_update', roomData);
+    }
+  });
+  
   socket.on('start_game', (roomId) => {
     const room = getRoomData(roomId);
     if (room && room.hostId === socket.id) {
