@@ -63,18 +63,26 @@ io.on('connection', (socket) => {
       console.log(`[SERVER] No room found for player ${socket.id}`);
       
       // Get all rooms and check if player exists in any of them
-      const allRooms = getAllRooms();
-      console.log(`[SERVER] Active rooms: ${JSON.stringify(allRooms)}`);
+      const allRooms = getRoomData();
+      console.log(`[SERVER] Active rooms: ${JSON.stringify(getAllRooms())}`);
       
       // Try to recover the room association
-      Object.keys(getRoomData() || {}).forEach(id => {
-        const room = getRoomData(id);
-        if (room && room.players && room.players.some(p => p.id === socket.id)) {
-          console.log(`[SERVER] Found player ${socket.id} in room ${id}, but handlePlayerInput failed to associate them`);
-          // Re-join the socket to the room to ensure Socket.io connection is right
-          socket.join(id);
-        }
-      });
+      if (allRooms) {
+        Object.keys(allRooms).forEach(id => {
+          const room = allRooms[id];
+          if (room && room.players && room.players.some(p => p.id === socket.id)) {
+            console.log(`[SERVER] Found player ${socket.id} in room ${id}, but handlePlayerInput failed to associate them`);
+            // Re-join the socket to the room to ensure Socket.io connection is right
+            socket.join(id);
+            
+            // Try processing the input again now that we've re-established the connection
+            const retryRoomId = handlePlayerInput(socket.id, input);
+            if (retryRoomId) {
+              console.log(`[SERVER] Successfully processed input after reconnection for player ${socket.id} in room ${retryRoomId}`);
+            }
+          }
+        });
+      }
     }
   });
   
