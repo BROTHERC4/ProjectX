@@ -50,7 +50,23 @@ function handlePlayerInput(playerId, input) {
   if (!player) return null;
   
   // Update player state based on input (will be applied in game loop)
-  player.input = input;
+  player.input = {...input}; // Make a copy to ensure reference is updated
+  
+  // Force immediate position update for testing
+  if (playerRoom.gameState && playerRoom.gameState.players) {
+    const gamePlayer = playerRoom.gameState.players.find(p => p.id === playerId);
+    if (gamePlayer) {
+      // Apply movement immediately for testing
+      if (input.left) {
+        gamePlayer.position.x -= 10;
+        if (gamePlayer.position.x < 50) gamePlayer.position.x = 50;
+      } else if (input.right) {
+        gamePlayer.position.x += 10;
+        if (gamePlayer.position.x > SCREEN_WIDTH - 50) gamePlayer.position.x = SCREEN_WIDTH - 50;
+      }
+      console.log(`[GAMESTATE] Updated player ${playerId} position:`, gamePlayer.position);
+    }
+  }
   
   // Debug log
   if (process.env.DEBUG || true) {
@@ -302,10 +318,19 @@ function updateGameState(roomId, io) {
  */
 function updatePlayers(gameState, players, deltaTime) {
   players.forEach(player => {
-    if (!player.input) return;
+    if (!player.input) {
+      console.log(`[GAMESTATE] Player ${player.id} has no input`);
+      return;
+    }
     
     const gamePlayer = gameState.players.find(p => p.id === player.id);
-    if (!gamePlayer) return;
+    if (!gamePlayer) {
+      console.log(`[GAMESTATE] Player ${player.id} not found in gameState`);
+      return;
+    }
+    
+    // Store original position for comparison
+    const origX = gamePlayer.position.x;
     
     // Move based on input with the SAME speed as singleplayer
     if (player.input.left) {
@@ -315,6 +340,12 @@ function updatePlayers(gameState, players, deltaTime) {
       gamePlayer.position.x += PLAYER_SPEED * (deltaTime / 1000);
       if (gamePlayer.position.x > SCREEN_WIDTH - 50) gamePlayer.position.x = SCREEN_WIDTH - 50;
     }
+    
+    // Log position change if it moved
+    if (origX !== gamePlayer.position.x) {
+      console.log(`[GAMESTATE] Player ${player.id} moved from ${origX} to ${gamePlayer.position.x}`);
+    }
+    
     // Handle shooting with the SAME fire rate as singleplayer (200ms)
     if (player.input.fire && !gamePlayer.invincible) {
       const now = player.input.time || Date.now();
@@ -326,8 +357,10 @@ function updatePlayers(gameState, players, deltaTime) {
           velocity: { x: 0, y: -BULLET_SPEED },
           playerId: player.id
         });
+        console.log(`[GAMESTATE] Player ${player.id} fired bullet`);
       }
     }
+    
     // Debug log
     if (process.env.DEBUG || true) {
       console.log(`[UPDATE] Player ${player.id} pos:`, gamePlayer.position);
