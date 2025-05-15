@@ -17,7 +17,7 @@ class Start extends Phaser.Scene {
   preload() {
     // Set up loading error handler
     this.load.on('loaderror', (fileObj) => {
-      console.error('Error loading asset:', fileObj.src);
+      // console.error('Error loading asset:', fileObj.src);
       this.scene.start('MenuScene', { error: `Failed to load game assets. Please refresh the page.` });
     });
     

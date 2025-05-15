@@ -48,12 +48,12 @@ class SocketClient {
   setupSocketListeners() {
     // Connection events
     this.socket.on('connect', () => {
-      console.log('Connected to server with ID:', this.socket.id);
+      // console.log('Connected to server with ID:', this.socket.id);
       this.playerId = this.socket.id;
       
       // If we were previously in a room, try to rejoin
       if (this.wasConnected && this.lastRoomId && this.lastPlayerName) {
-        console.log(`[SOCKET] Attempting to rejoin room ${this.lastRoomId}`);
+        // console.log(`[SOCKET] Attempting to rejoin room ${this.lastRoomId}`);
         this.joinRoom(this.lastRoomId, this.lastPlayerName);
       }
       // If we have a previous socket ID and are in a room, reassociate
@@ -69,26 +69,26 @@ class SocketClient {
     });
     
     this.socket.on('disconnect', () => {
-      console.log('Disconnected from server');
+      // console.log('Disconnected from server');
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
+      // console.error('Connection error:', error);
       if (this.onError) {
         this.onError('Connection error. Please refresh the page.');
       }
     });
     
     this.socket.on('reconnect', (attemptNumber) => {
-      console.log(`Reconnected after ${attemptNumber} attempts`);
+      // console.log(`Reconnected after ${attemptNumber} attempts`);
     });
     
     this.socket.on('reconnect_error', (error) => {
-      console.error('Reconnection error:', error);
+      // console.error('Reconnection error:', error);
     });
     
     this.socket.on('reconnect_failed', () => {
-      console.error('Failed to reconnect');
+      // console.error('Failed to reconnect');
       if (this.onError) {
         this.onError('Failed to reconnect. Please refresh the page.');
       }
@@ -96,7 +96,7 @@ class SocketClient {
     
     // Room events
     this.socket.on('room_created', (data) => {
-      console.log('Room created:', data);
+      // console.log('Room created:', data);
       this.roomId = data.roomId;
       this.isHost = true;
       
@@ -110,7 +110,7 @@ class SocketClient {
     });
     
     this.socket.on('room_joined', (data) => {
-      console.log('Room joined:', data);
+      // console.log('Room joined:', data);
       this.roomId = data.roomId;
       
       // Store room info for reconnection
@@ -123,7 +123,7 @@ class SocketClient {
     });
     
     this.socket.on('room_update', (data) => {
-      console.log('Room update:', data);
+      // console.log('Room update:', data);
       this.players = data.players;
       
       if (this.onRoomUpdated) {
@@ -133,7 +133,7 @@ class SocketClient {
     
     // Game events
     this.socket.on('game_started', () => {
-      console.log('Game started');
+      // console.log('Game started');
       
       if (this.onGameStarted) {
         this.onGameStarted();
@@ -150,7 +150,7 @@ class SocketClient {
     });
     
     this.socket.on('game_ended', (data) => {
-      console.log('Game ended:', data);
+      // console.log('Game ended:', data);
       
       if (this.onGameEnded) {
         this.onGameEnded(data);
@@ -158,7 +158,7 @@ class SocketClient {
     });
     
     this.socket.on('player_left', (data) => {
-      console.log('Player left:', data);
+      // console.log('Player left:', data);
       
       if (this.onPlayerLeft) {
         this.onPlayerLeft(data);
@@ -167,7 +167,7 @@ class SocketClient {
     
     // Error handling
     this.socket.on('error', (data) => {
-      console.error('Socket error:', data.message);
+      // console.error('Socket error:', data.message);
       
       if (this.onError) {
         this.onError(data.message);
@@ -201,7 +201,7 @@ class SocketClient {
     if (this.isHost && this.roomId) {
       this.socket.emit('start_game', this.roomId);
     } else {
-      console.error('Only the host can start the game');
+      // console.error('Only the host can start the game');
     }
   }
   
@@ -211,7 +211,7 @@ class SocketClient {
    */
   sendInput(input) {
     if (this.socket) {
-      console.log('[SOCKET] Sending input:', input);
+      // console.log('[SOCKET] Sending input:', input);
       this.socket.emit('player_input', input);
     }
   }

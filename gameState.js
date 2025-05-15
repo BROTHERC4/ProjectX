@@ -28,7 +28,7 @@ function handlePlayerInput(playerId, input) {
   const allRooms = getAllRoomData();
   if (!allRooms) {
     // No rooms exist, so ignore input (likely single player mode)
-    console.log(`[GAMESTATE] No rooms exist for player ${playerId}`);
+    // console.log(`[GAMESTATE] No rooms exist for player ${playerId}`);
     return null;
   }
   
@@ -44,23 +44,23 @@ function handlePlayerInput(playerId, input) {
       playerFound = true;
       playerRoom = room;
       roomId = id;
-      console.log(`[GAMESTATE] Found player ${playerId} in room ${id}`);
+      // console.log(`[GAMESTATE] Found player ${playerId} in room ${id}`);
     }
   });
   
   if (!playerFound) {
-    console.log(`[GAMESTATE] Player ${playerId} not found in any room`);
+    // console.log(`[GAMESTATE] Player ${playerId} not found in any room`);
     return null;
   }
   
   if (!playerRoom || !roomId || !playerRoom.gameInProgress) {
-    console.log(`[GAMESTATE] Room ${roomId} not active or game not in progress`);
+    // console.log(`[GAMESTATE] Room ${roomId} not active or game not in progress`);
     return null;
   }
   
   const player = playerRoom.players.find(p => p.id === playerId);
   if (!player) {
-    console.log(`[GAMESTATE] Player ${playerId} not found in room ${roomId} players list`);
+    // console.log(`[GAMESTATE] Player ${playerId} not found in room ${roomId} players list`);
     return null;
   }
   
@@ -79,15 +79,15 @@ function handlePlayerInput(playerId, input) {
         gamePlayer.position.x += 10;
         if (gamePlayer.position.x > SCREEN_WIDTH - 50) gamePlayer.position.x = SCREEN_WIDTH - 50;
       }
-      console.log(`[GAMESTATE] Updated player ${playerId} position:`, gamePlayer.position);
+      // console.log(`[GAMESTATE] Updated player ${playerId} position:`, gamePlayer.position);
     } else {
-      console.log(`[GAMESTATE] Player ${playerId} not found in gameState players list`);
+      // console.log(`[GAMESTATE] Player ${playerId} not found in gameState players list`);
     }
   }
   
   // Debug log
   if (process.env.DEBUG || true) {
-    console.log(`[INPUT] Player ${playerId} in room ${roomId} input:`, input);
+    // console.log(`[INPUT] Player ${playerId} in room ${roomId} input:`, input);
   }
   
   return roomId;
@@ -339,13 +339,13 @@ function updateGameState(roomId, io) {
 function updatePlayers(gameState, players, deltaTime) {
   players.forEach(player => {
     if (!player.input) {
-      console.log(`[GAMESTATE] Player ${player.id} has no input`);
+      // console.log(`[GAMESTATE] Player ${player.id} has no input`);
       return;
     }
     
     const gamePlayer = gameState.players.find(p => p.id === player.id);
     if (!gamePlayer) {
-      console.log(`[GAMESTATE] Player ${player.id} not found in gameState`);
+      // console.log(`[GAMESTATE] Player ${player.id} not found in gameState`);
       return;
     }
     
@@ -363,7 +363,7 @@ function updatePlayers(gameState, players, deltaTime) {
     
     // Log position change if it moved
     if (origX !== gamePlayer.position.x) {
-      console.log(`[GAMESTATE] Player ${player.id} moved from ${origX} to ${gamePlayer.position.x}`);
+      // console.log(`[GAMESTATE] Player ${player.id} moved from ${origX} to ${gamePlayer.position.x}`);
     }
     
     // Handle shooting with the SAME fire rate as singleplayer (200ms)
@@ -377,13 +377,13 @@ function updatePlayers(gameState, players, deltaTime) {
           velocity: { x: 0, y: -BULLET_SPEED },
           playerId: player.id
         });
-        console.log(`[GAMESTATE] Player ${player.id} fired bullet`);
+        // console.log(`[GAMESTATE] Player ${player.id} fired bullet`);
       }
     }
     
     // Debug log
     if (process.env.DEBUG || true) {
-      console.log(`[UPDATE] Player ${player.id} pos:`, gamePlayer.position);
+      // console.log(`[UPDATE] Player ${player.id} pos:`, gamePlayer.position);
     }
   });
 }
