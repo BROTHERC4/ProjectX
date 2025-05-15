@@ -26,6 +26,7 @@ class SocketClient {
     this.wasConnected = false;
     this.lastRoomId = localStorage.getItem('lastRoomId') || null;
     this.lastPlayerName = localStorage.getItem('lastPlayerName') || null;
+    this.lastSocketId = null;
     
     // Event handlers
     this.onRoomCreated = null;
@@ -55,7 +56,15 @@ class SocketClient {
         console.log(`[SOCKET] Attempting to rejoin room ${this.lastRoomId}`);
         this.joinRoom(this.lastRoomId, this.lastPlayerName);
       }
-      
+      // If we have a previous socket ID and are in a room, reassociate
+      if (this.lastSocketId && this.roomId) {
+        this.socket.emit('reassociate_player', {
+          oldId: this.lastSocketId,
+          playerName: this.playerName,
+          roomId: this.roomId
+        });
+      }
+      this.lastSocketId = this.socket.id;
       this.wasConnected = true;
     });
     

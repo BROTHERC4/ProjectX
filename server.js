@@ -104,6 +104,18 @@ io.on('connection', (socket) => {
     }
   });
   
+  // Add reassociate_player event for reconnects
+  socket.on('reassociate_player', ({ oldId, playerName, roomId }) => {
+    const room = getRoomData(roomId);
+    if (room) {
+      const player = room.players.find(p => p.id === oldId);
+      if (player) {
+        player.id = socket.id; // Update to new socket id
+        console.log(`[SERVER] Reassociated player ${oldId} to new socket ${socket.id} in room ${roomId}`);
+      }
+    }
+  });
+  
   // Handle disconnection
   socket.on('disconnect', () => {
     // Find which room this player was in
