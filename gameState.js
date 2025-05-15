@@ -67,24 +67,6 @@ function handlePlayerInput(playerId, input) {
   // Update player state based on input (will be applied in game loop)
   player.input = {...input}; // Make a copy to ensure reference is updated
   
-  // Force immediate position update for testing
-  if (playerRoom.gameState && playerRoom.gameState.players) {
-    const gamePlayer = playerRoom.gameState.players.find(p => p.id === playerId);
-    if (gamePlayer) {
-      // Apply movement immediately for testing
-      if (input.left) {
-        gamePlayer.position.x -= 10;
-        if (gamePlayer.position.x < 50) gamePlayer.position.x = 50;
-      } else if (input.right) {
-        gamePlayer.position.x += 10;
-        if (gamePlayer.position.x > SCREEN_WIDTH - 50) gamePlayer.position.x = SCREEN_WIDTH - 50;
-      }
-      // console.log(`[GAMESTATE] Updated player ${playerId} position:`, gamePlayer.position);
-    } else {
-      // console.log(`[GAMESTATE] Player ${playerId} not found in gameState players list`);
-    }
-  }
-  
   // Debug log
   if (process.env.DEBUG || true) {
     // console.log(`[INPUT] Player ${playerId} in room ${roomId} input:`, input);
