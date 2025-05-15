@@ -282,7 +282,9 @@ function updateGameState(roomId, io) {
   const room = getRoomData(roomId);
   if (!room || !room.gameInProgress || !room.gameState) return;
   
-  const deltaTime = Date.now() - room.gameState.timestamp;
+  let deltaTime = Date.now() - room.gameState.timestamp;
+  // Clamp deltaTime to prevent movement spikes (16ms = 60 FPS, 34ms = ~30 FPS)
+  deltaTime = Math.max(16, Math.min(deltaTime, 34));
   const gameState = room.gameState;
   
   // Skip update if game is over
