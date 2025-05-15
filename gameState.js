@@ -107,6 +107,7 @@ function startGameInRoom(roomId, io) {
   room.gameState = {
     players: room.players.map(player => ({
       id: player.id,
+      name: player.name,
       position: player.position,
       lives: 3,
       score: 0,
