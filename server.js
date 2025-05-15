@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const { createRoom, joinRoom, leaveRoom, getRoomData, getAllRooms } = require('./roomManager');
+const { createRoom, joinRoom, leaveRoom, getRoomData, getAllRooms, getAllRoomData } = require('./roomManager');
 const { handlePlayerInput, startGameInRoom, endGameInRoom } = require('./gameState');
 
 const app = express();
@@ -63,7 +63,7 @@ io.on('connection', (socket) => {
       console.log(`[SERVER] No room found for player ${socket.id}`);
       
       // Get all rooms and check if player exists in any of them
-      const allRooms = getRoomData();
+      const allRooms = getAllRoomData();
       console.log(`[SERVER] Active rooms: ${JSON.stringify(getAllRooms())}`);
       
       // Try to recover the room association

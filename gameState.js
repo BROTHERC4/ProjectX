@@ -1,5 +1,5 @@
 // Game state management for multiplayer
-const { getRoomData } = require('./roomManager');
+const { getRoomData, getAllRoomData } = require('./roomManager');
 
 // Store game loop intervals for each room
 const gameLoops = {};
@@ -24,8 +24,8 @@ function handlePlayerInput(playerId, input) {
   let playerRoom = null;
   let roomId = null;
   
-  // Get all rooms - FIX: getRoomData() without arguments returns all rooms
-  const allRooms = getRoomData();
+  // Get all rooms - FIX: use getAllRoomData()
+  const allRooms = getAllRoomData();
   if (!allRooms) {
     // No rooms exist, so ignore input (likely single player mode)
     console.log(`[GAMESTATE] No rooms exist for player ${playerId}`);

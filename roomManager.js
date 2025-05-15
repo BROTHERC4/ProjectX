@@ -175,6 +175,10 @@ function areAllPlayersReady(roomId) {
          rooms[roomId].players.every(p => p.ready);
 }
 
+function getAllRoomData() {
+  return rooms;
+}
+
 module.exports = {
   createRoom,
   joinRoom,
@@ -182,5 +186,6 @@ module.exports = {
   getRoomData,
   getAllRooms,
   setPlayerReady,
-  areAllPlayersReady
+  areAllPlayersReady,
+  getAllRoomData
 }; 
