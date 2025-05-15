@@ -6,7 +6,7 @@ const gameLoops = {};
 
 // Game constants
 const GAME_SPEED = 1000 / 60; // 60 FPS
-const PLAYER_SPEED = 50; // Slower for multiplayer
+const PLAYER_SPEED = 10; // Slower for multiplayer
 const BULLET_SPEED = 400;
 const ENEMY_SPEED = 35;
 const ENEMY_BULLET_SPEED = 250;
