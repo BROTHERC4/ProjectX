@@ -432,10 +432,14 @@ class Start extends Phaser.Scene {
         );
         barrierSprite.barrierId = serverBarrier.id;
         barrierSprite.setImmovable(true);
+        barrierSprite.setAlpha(1); // Start fully opaque
+        barrierSprite._lastDurability = serverBarrier.durability;
       }
-      
-      // Update alpha based on durability
-      barrierSprite.setAlpha(serverBarrier.durability / 3);
+      // Only update alpha if durability changed
+      if (barrierSprite._lastDurability !== serverBarrier.durability) {
+        barrierSprite.setAlpha(serverBarrier.durability / 3);
+        barrierSprite._lastDurability = serverBarrier.durability;
+      }
     });
     
     // Remove barriers that no longer exist

@@ -505,6 +505,72 @@ function handleEnemyShooting(gameState) {
  * @param {object} room - Room object
  */
 function checkCollisions(gameState, room) {
+  // Player bullets vs barriers - more precise collision
+  gameState.bullets = gameState.bullets.filter(bullet => {
+    let hit = false;
+    gameState.barriers.forEach(barrier => {
+      if (distance(bullet.position, barrier.position) < 8) {
+        barrier.durability--;
+        hit = true;
+        // Create barrier hit effect
+        gameState.hitEffects = gameState.hitEffects || [];
+        gameState.hitEffects.push({
+          id: `hit-${Date.now()}-${barrier.id}`,
+          targetId: barrier.id,
+          type: 'barrier-hit',
+          duration: 100
+        });
+        // Remove barrier if destroyed
+        if (barrier.durability <= 0) {
+          gameState.barriers = gameState.barriers.filter(b => b.id !== barrier.id);
+          // Create barrier destruction effect
+          gameState.explosions = gameState.explosions || [];
+          gameState.explosions.push({
+            id: `explosion-${Date.now()}`,
+            position: {...barrier.position},
+            type: 'barrier',
+            timeLeft: 500
+          });
+        }
+      }
+    });
+    // Keep bullet if it didn't hit anything
+    return !hit;
+  });
+
+  // Enemy bullets vs barriers - more precise collision
+  gameState.enemyBullets = gameState.enemyBullets.filter(bullet => {
+    let hit = false;
+    gameState.barriers.forEach(barrier => {
+      if (distance(bullet.position, barrier.position) < 8) {
+        barrier.durability--;
+        hit = true;
+        // Create barrier hit effect
+        gameState.hitEffects = gameState.hitEffects || [];
+        gameState.hitEffects.push({
+          id: `hit-${Date.now()}-${barrier.id}`,
+          targetId: barrier.id,
+          type: 'barrier-hit',
+          duration: 100
+        });
+        // Remove barrier if destroyed
+        if (barrier.durability <= 0) {
+          gameState.barriers = gameState.barriers.filter(b => b.id !== barrier.id);
+          // Create barrier destruction effect
+          gameState.explosions = gameState.explosions || [];
+          gameState.explosions.push({
+            id: `explosion-${Date.now()}`,
+            position: {...barrier.position},
+            type: 'barrier',
+            timeLeft: 500
+          });
+        }
+      }
+    });
+    // Keep bullet if it didn't hit anything
+    return !hit;
+  });
+  
   // Player bullets vs enemies - make more precise like singleplayer
   gameState.bullets = gameState.bullets.filter(bullet => {
     let hit = false;
@@ -554,44 +620,6 @@ function checkCollisions(gameState, room) {
           
           // Remove enemy
           gameState.enemies = gameState.enemies.filter(e => e.id !== enemy.id);
-        }
-      }
-    });
-    
-    // Keep bullet if it didn't hit anything
-    return !hit;
-  });
-  
-  // Enemy bullets vs barriers - more precise collision
-  gameState.enemyBullets = gameState.enemyBullets.filter(bullet => {
-    let hit = false;
-    
-    gameState.barriers.forEach(barrier => {
-      if (distance(bullet.position, barrier.position) < 8) {
-        barrier.durability--;
-        hit = true;
-        
-        // Create barrier hit effect
-        gameState.hitEffects = gameState.hitEffects || [];
-        gameState.hitEffects.push({
-          id: `hit-${Date.now()}-${barrier.id}`,
-          targetId: barrier.id,
-          type: 'barrier-hit',
-          duration: 100
-        });
-        
-        // Remove barrier if destroyed
-        if (barrier.durability <= 0) {
-          gameState.barriers = gameState.barriers.filter(b => b.id !== barrier.id);
-          
-          // Create barrier destruction effect
-          gameState.explosions = gameState.explosions || [];
-          gameState.explosions.push({
-            id: `explosion-${Date.now()}`,
-            position: {...barrier.position},
-            type: 'barrier',
-            timeLeft: 500
-          });
         }
       }
     });
