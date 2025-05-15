@@ -656,20 +656,20 @@ class Start extends Phaser.Scene {
   }
   
   createExplosion(x, y, type = 'enemy') {
-    // Create a particle explosion effect
-    const emitter = this.add.particles(x, y, type === 'barrier' ? 'barrier-piece' : 'explosion', {
-      speed: { min: -100, max: 100 },
+    // Create a particle explosion effect using barrier-piece texture for all explosions
+    const emitter = this.add.particles(x, y, 'barrier-piece', {
+      speed: { min: 50, max: 150 },
       angle: { min: 0, max: 360 },
       scale: { start: 1, end: 0 },
       blendMode: 'ADD',
-      lifespan: 500,
-      gravityY: 300,
-      quantity: type === 'barrier' ? 8 : 15,
+      lifespan: 800,
+      gravityY: 200,
+      quantity: type === 'barrier' ? 8 : 12,
       emitting: false
     });
     
     // Emit all particles at once
-    emitter.explode(type === 'barrier' ? 8 : 15);
+    emitter.explode(type === 'barrier' ? 8 : 12);
     
     // Clean up after animation completes
     this.time.delayedCall(1000, () => {
