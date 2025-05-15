@@ -63,20 +63,6 @@
             font-family: 'Press Start 2P', cursive;
             font-size: 14px;
         }
-        #debug-info {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            font-family: monospace;
-            font-size: 12px;
-            color: #0f0;
-            background: rgba(0,0,0,0.7);
-            padding: 5px;
-            max-width: 780px;
-            max-height: 150px;
-            overflow: auto;
-            z-index: 1000;
-        }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -89,7 +75,6 @@
             <div class="spinner"></div>
             <p class="loading-message">Loading game assets...</p>
         </div>
-        <div id="debug-info"></div>
     </div>
 
     <!-- Socket.io Client -->
@@ -100,33 +85,20 @@
     
     <!-- Game Scripts -->
     <script>
-        // Debug logger helper function
-        function debugLog(message) {
-            console.log(message);
-            const debugEl = document.getElementById('debug-info');
-            if (debugEl) {
-                const timestamp = new Date().toLocaleTimeString();
-                debugEl.innerHTML += `<div>[${timestamp}] ${message}</div>`;
-                debugEl.scrollTop = debugEl.scrollHeight;
-            }
-        }
-
         // Check if resources loaded
         window.addEventListener('DOMContentLoaded', function() {
-            debugLog('DOM Content Loaded');
-            
             // Check if Socket.io loaded
             if (typeof io === 'undefined') {
-                debugLog('ERROR: Socket.io not loaded');
+                console.log('ERROR: Socket.io not loaded');
             } else {
-                debugLog('Socket.io loaded successfully');
+                console.log('Socket.io loaded successfully');
             }
             
             // Check if Phaser loaded
             if (typeof Phaser === 'undefined') {
-                debugLog('ERROR: Phaser not loaded');
+                console.log('ERROR: Phaser not loaded');
             } else {
-                debugLog('Phaser loaded successfully: ' + Phaser.VERSION);
+                console.log('Phaser loaded successfully: ' + Phaser.VERSION);
             }
         });
     </script>
@@ -144,19 +116,17 @@
     <script>
         // Show loading screen until game is ready
         window.addEventListener('load', function() {
-            debugLog('Window loaded');
             const loading = document.getElementById('loading');
             const loadingMessage = loading.querySelector('.loading-message');
             
             // Remove loading screen when Phaser has started
             document.addEventListener('phaser-ready', function() {
-                debugLog('Phaser ready event received');
                 loading.style.display = 'none';
             });
             
             // Check if Socket.io script loaded
             if (typeof io === 'undefined') {
-                debugLog('Socket.io connection failed on load');
+                console.log('Socket.io connection failed on load');
                 loadingMessage.innerHTML = 'Failed to connect to game server. Please check your connection and try again.';
                 addRetryButton(loading);
                 return;
@@ -164,7 +134,7 @@
             
             // Check if Phaser loaded
             if (typeof Phaser === 'undefined') {
-                debugLog('Phaser failed to load');
+                console.log('Phaser failed to load');
                 loadingMessage.innerHTML = 'Failed to load game engine. Please check your connection and try again.';
                 addRetryButton(loading);
                 return;
@@ -173,14 +143,14 @@
             // Check if socketClient was initialized
             setTimeout(function() {
                 if (typeof window.socketClient === 'undefined') {
-                    debugLog('Socket client not initialized');
+                    console.log('Socket client not initialized');
                 } else {
-                    debugLog('Socket client initialized');
+                    console.log('Socket client initialized');
                     // Check socket connection status
                     if (window.socketClient.socket.connected) {
-                        debugLog('Socket is connected');
+                        console.log('Socket is connected');
                     } else {
-                        debugLog('Socket is not connected');
+                        console.log('Socket is not connected');
                     }
                 }
             }, 1000);
@@ -188,28 +158,26 @@
             // Check on game loading
             setTimeout(function() {
                 if (typeof window.game === 'undefined') {
-                    debugLog('Game not initialized');
+                    console.log('Game not initialized');
                 } else {
-                    debugLog('Game initialized');
+                    console.log('Game initialized');
                 }
             }, 2000);
             
             // Show error if loading takes too long
             setTimeout(function() {
                 if (loading.style.display !== 'none') {
-                    debugLog('Loading timeout triggered');
+                    console.log('Loading timeout triggered');
                     loadingMessage.innerHTML = 'Game loading is taking longer than expected. Please check your connection or refresh the page.';
                     addRetryButton(loading);
                 }
             }, 10000);
             
             function addRetryButton(container) {
-                debugLog('Adding retry button');
                 const button = document.createElement('button');
                 button.className = 'retry-button';
                 button.innerText = 'Retry';
                 button.onclick = function() {
-                    debugLog('Retry clicked');
                     window.location.reload();
                 };
                 container.appendChild(button);
@@ -220,7 +188,6 @@
     <!-- Also add a direct way to hide the loading screen from game.js -->
     <script>
         window.hideLoadingScreen = function() {
-            debugLog('hideLoadingScreen called directly');
             const loadingEl = document.getElementById('loading');
             if (loadingEl) {
                 loadingEl.style.display = 'none';
