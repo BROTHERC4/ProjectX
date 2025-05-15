@@ -162,10 +162,13 @@ class SocketClient {
   
   /**
    * Send player input to the server
-   * @param {object} input - Input object (left, right, fire)
+   * @param {object} input - Player input (left, right, fire)
    */
   sendInput(input) {
-    this.socket.emit('player_input', input);
+    if (this.socket) {
+      console.log('[SOCKET] Sending input:', input);
+      this.socket.emit('player_input', input);
+    }
   }
   
   /**

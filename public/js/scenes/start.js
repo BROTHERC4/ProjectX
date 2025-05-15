@@ -530,6 +530,9 @@ class Start extends Phaser.Scene {
     // Background scrolling
     this.background.tilePositionY -= 0.5;
     
+    // Previous input state to detect changes
+    const prevInput = this._lastInput || {};
+    
     // Handle player input with the same control scheme as singleplayer
     const input = {
       left: this.cursors.left.isDown,
@@ -538,6 +541,14 @@ class Start extends Phaser.Scene {
       // Add precise current time to allow server to calculate exact firing rate
       time: Date.now()
     };
+
+    // Log when input changes
+    if (input.left !== prevInput.left || input.right !== prevInput.right || input.fire !== prevInput.fire) {
+      console.log('[INPUT] Keys pressed:', input);
+    }
+    
+    // Save current input for next frame
+    this._lastInput = {...input};
     
     // Send input to server
     window.socketClient.sendInput(input);

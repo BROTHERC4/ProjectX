@@ -51,9 +51,13 @@ io.on('connection', (socket) => {
   
   // Game actions
   socket.on('player_input', (input) => {
+    console.log(`[SERVER] Received input from ${socket.id}:`, input);
     const roomId = handlePlayerInput(socket.id, input);
     if (roomId) {
       // We don't emit state here - the game loop will handle that
+      console.log(`[SERVER] Input processed for room ${roomId}`);
+    } else {
+      console.log(`[SERVER] No room found for player ${socket.id}`);
     }
   });
   
