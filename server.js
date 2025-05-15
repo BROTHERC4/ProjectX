@@ -34,6 +34,7 @@ io.on('connection', (socket) => {
   socket.on('create_room', (playerName) => {
     const roomId = createRoom(socket.id, playerName);
     socket.join(roomId);
+    console.log(`[SERVER] Player ${socket.id} created and joined room ${roomId}`);
     socket.emit('room_created', { roomId, playerId: socket.id });
     io.to(roomId).emit('room_update', getRoomData(roomId));
   });
@@ -42,9 +43,11 @@ io.on('connection', (socket) => {
     const joinResult = joinRoom(roomId, socket.id, playerName);
     if (joinResult.success) {
       socket.join(roomId);
+      console.log(`[SERVER] Player ${socket.id} joined room ${roomId}`);
       socket.emit('room_joined', { roomId, playerId: socket.id });
       io.to(roomId).emit('room_update', getRoomData(roomId));
     } else {
+      console.log(`[SERVER] Player ${socket.id} failed to join room ${roomId}: ${joinResult.error}`);
       socket.emit('error', { message: joinResult.error });
     }
   });
@@ -55,9 +58,23 @@ io.on('connection', (socket) => {
     const roomId = handlePlayerInput(socket.id, input);
     if (roomId) {
       // We don't emit state here - the game loop will handle that
-      console.log(`[SERVER] Input processed for room ${roomId}`);
+      console.log(`[SERVER] Input processed for player ${socket.id} in room ${roomId}`);
     } else {
       console.log(`[SERVER] No room found for player ${socket.id}`);
+      
+      // Get all rooms and check if player exists in any of them
+      const allRooms = getAllRooms();
+      console.log(`[SERVER] Active rooms: ${JSON.stringify(allRooms)}`);
+      
+      // Try to recover the room association
+      Object.keys(getRoomData() || {}).forEach(id => {
+        const room = getRoomData(id);
+        if (room && room.players && room.players.some(p => p.id === socket.id)) {
+          console.log(`[SERVER] Found player ${socket.id} in room ${id}, but handlePlayerInput failed to associate them`);
+          // Re-join the socket to the room to ensure Socket.io connection is right
+          socket.join(id);
+        }
+      });
     }
   });
   

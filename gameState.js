@@ -28,26 +28,41 @@ function handlePlayerInput(playerId, input) {
   const allRooms = getRoomData();
   if (!allRooms) {
     // No rooms exist, so ignore input (likely single player mode)
+    console.log(`[GAMESTATE] No rooms exist for player ${playerId}`);
     return null;
   }
+  
   // Search through all rooms to find the player
+  let playerFound = false;
   Object.keys(allRooms).forEach(id => {
     const room = getRoomData(id);
-    if (!room) return;
+    if (!room || !room.players) return;
+    
     const playerIndex = room.players.findIndex(p => p.id === playerId);
     
     if (playerIndex >= 0) {
+      playerFound = true;
       playerRoom = room;
       roomId = id;
+      console.log(`[GAMESTATE] Found player ${playerId} in room ${id}`);
     }
   });
   
+  if (!playerFound) {
+    console.log(`[GAMESTATE] Player ${playerId} not found in any room`);
+    return null;
+  }
+  
   if (!playerRoom || !roomId || !playerRoom.gameInProgress) {
+    console.log(`[GAMESTATE] Room ${roomId} not active or game not in progress`);
     return null;
   }
   
   const player = playerRoom.players.find(p => p.id === playerId);
-  if (!player) return null;
+  if (!player) {
+    console.log(`[GAMESTATE] Player ${playerId} not found in room ${roomId} players list`);
+    return null;
+  }
   
   // Update player state based on input (will be applied in game loop)
   player.input = {...input}; // Make a copy to ensure reference is updated
@@ -65,6 +80,8 @@ function handlePlayerInput(playerId, input) {
         if (gamePlayer.position.x > SCREEN_WIDTH - 50) gamePlayer.position.x = SCREEN_WIDTH - 50;
       }
       console.log(`[GAMESTATE] Updated player ${playerId} position:`, gamePlayer.position);
+    } else {
+      console.log(`[GAMESTATE] Player ${playerId} not found in gameState players list`);
     }
   }
   

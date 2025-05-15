@@ -22,6 +22,11 @@ class SocketClient {
     this.gameState = null;
     this.players = [];
     
+    // Track connection state
+    this.wasConnected = false;
+    this.lastRoomId = localStorage.getItem('lastRoomId') || null;
+    this.lastPlayerName = localStorage.getItem('lastPlayerName') || null;
+    
     // Event handlers
     this.onRoomCreated = null;
     this.onRoomJoined = null;
@@ -44,6 +49,14 @@ class SocketClient {
     this.socket.on('connect', () => {
       console.log('Connected to server with ID:', this.socket.id);
       this.playerId = this.socket.id;
+      
+      // If we were previously in a room, try to rejoin
+      if (this.wasConnected && this.lastRoomId && this.lastPlayerName) {
+        console.log(`[SOCKET] Attempting to rejoin room ${this.lastRoomId}`);
+        this.joinRoom(this.lastRoomId, this.lastPlayerName);
+      }
+      
+      this.wasConnected = true;
     });
     
     this.socket.on('disconnect', () => {
@@ -57,11 +70,30 @@ class SocketClient {
       }
     });
     
+    this.socket.on('reconnect', (attemptNumber) => {
+      console.log(`Reconnected after ${attemptNumber} attempts`);
+    });
+    
+    this.socket.on('reconnect_error', (error) => {
+      console.error('Reconnection error:', error);
+    });
+    
+    this.socket.on('reconnect_failed', () => {
+      console.error('Failed to reconnect');
+      if (this.onError) {
+        this.onError('Failed to reconnect. Please refresh the page.');
+      }
+    });
+    
     // Room events
     this.socket.on('room_created', (data) => {
       console.log('Room created:', data);
       this.roomId = data.roomId;
       this.isHost = true;
+      
+      // Store room info for reconnection
+      localStorage.setItem('lastRoomId', this.roomId);
+      localStorage.setItem('lastPlayerName', this.playerName);
       
       if (this.onRoomCreated) {
         this.onRoomCreated(data);
@@ -71,6 +103,10 @@ class SocketClient {
     this.socket.on('room_joined', (data) => {
       console.log('Room joined:', data);
       this.roomId = data.roomId;
+      
+      // Store room info for reconnection
+      localStorage.setItem('lastRoomId', this.roomId);
+      localStorage.setItem('lastPlayerName', this.playerName);
       
       if (this.onRoomJoined) {
         this.onRoomJoined(data);
