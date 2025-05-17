@@ -289,7 +289,7 @@ function updateGameState(roomId, io) {
   handleEnemyShooting(gameState);
   
   // Check collisions
-  checkCollisions(gameState, room);
+  checkCollisions(gameState, room, io);
   
   // Check win/lose conditions
   checkGameEnd(gameState, room);
@@ -485,8 +485,9 @@ function handleEnemyShooting(gameState) {
  * Check all collisions
  * @param {object} gameState - Current game state
  * @param {object} room - Room object
+ * @param {object} io - Socket.io instance
  */
-function checkCollisions(gameState, room) {
+function checkCollisions(gameState, room, io) {
   // Player bullets vs barriers - more precise collision
   gameState.bullets = gameState.bullets.filter(bullet => {
     let hit = false;
@@ -649,24 +650,19 @@ function checkCollisions(gameState, room) {
         const playerId = player.id;
         const roomId = room.id;
         
-        // Reset invincibility after 1.5 seconds (reduced from 2 seconds)
+        // Pass io via closure
         setTimeout(() => {
           try {
-            // Get the current room data again, as it may have changed
             const currentRoom = getRoomData(roomId);
             if (!currentRoom || !currentRoom.gameState) {
               console.log(`[SERVER] Couldn't find room ${roomId} to reset invincibility for player ${playerId}`);
               return;
             }
-            
-            // Find player in the current game state
             const updatedPlayer = currentRoom.gameState.players.find(p => p.id === playerId);
             if (updatedPlayer) {
               updatedPlayer.invincible = false;
               console.log(`[SERVER] Player ${playerId} invincibility reset to false`);
-              
-              // Force an immediate game state update to clients
-              io.to(roomId).emit('game_state', currentRoom.gameState);
+              if (io) io.to(roomId).emit('game_state', currentRoom.gameState);
             } else {
               console.log(`[SERVER] Couldn't find player ${playerId} in room ${roomId} to reset invincibility`);
             }
