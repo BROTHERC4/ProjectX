@@ -372,8 +372,36 @@ class Start extends Phaser.Scene {
       
       // Update visibility based on player invincibility
       if (serverPlayer.invincible) {
-        playerSprite.alpha = 0.5;
+        // If the player just became invincible, start blinking animation
+        if (!playerSprite.isInvincible) {
+          playerSprite.isInvincible = true;
+          
+          // Clear any existing tween
+          if (playerSprite.blinkTween) {
+            this.tweens.remove(playerSprite.blinkTween);
+          }
+          
+          // Create blinking effect for invincibility
+          playerSprite.blinkTween = this.tweens.add({
+            targets: playerSprite,
+            alpha: 0.4,
+            duration: 200,
+            yoyo: true,
+            repeat: 4, // Blink several times during invincibility period
+            onComplete: () => {
+              if (playerSprite && playerSprite.active) {
+                playerSprite.alpha = 0.5; // End on partially transparent
+              }
+            }
+          });
+        }
       } else {
+        // If no longer invincible, stop any blinking and reset alpha
+        playerSprite.isInvincible = false;
+        if (playerSprite.blinkTween) {
+          this.tweens.remove(playerSprite.blinkTween);
+          playerSprite.blinkTween = null;
+        }
         playerSprite.alpha = 1;
       }
     });
