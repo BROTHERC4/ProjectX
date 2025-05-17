@@ -378,23 +378,16 @@ class Start extends Phaser.Scene {
         if (!playerSprite.isInvincible) {
           playerSprite.isInvincible = true;
           console.log(`[CLIENT] Player ${serverPlayer.id} became invincible`);
-          
-          // Clear any existing tween - ensure all tweens on this sprite are removed
+          // First, make sure any existing tweens are properly stopped
           this.tweens.killTweensOf(playerSprite);
-          
-          // Create blinking effect for invincibility
+          // Create blinking effect for invincibility - IMPROVED
           playerSprite.blinkTween = this.tweens.add({
             targets: playerSprite,
             alpha: 0.4,
             duration: 200,
             yoyo: true,
-            repeat: 4, // Blink several times during invincibility period
-            onComplete: () => {
-              if (playerSprite && playerSprite.active) {
-                playerSprite.alpha = 0.5; // End on partially transparent
-                console.log(`[CLIENT] Player ${serverPlayer.id} blink animation complete, set alpha 0.5`);
-              }
-            }
+            repeat: 4
+            // DON'T SET ALPHA IN ONCOMPLETE - let the invincibility state handler manage it
           });
         }
       } else {
@@ -402,20 +395,23 @@ class Start extends Phaser.Scene {
         if (playerSprite.isInvincible) {
           console.log(`[CLIENT] Player ${serverPlayer.id} is no longer invincible, restoring opacity`);
           playerSprite.isInvincible = false;
-          
-          // Use more aggressive approach to kill all tweens and restore opacity
+          // Kill any existing tweens including the blink tween
           this.tweens.killTweensOf(playerSprite);
           playerSprite.blinkTween = null;
-          
-          // Force restore full opacity (apply twice to ensure it takes effect)
+          // Set alpha immediately AND use a tween to ensure it's applied
           playerSprite.alpha = 1;
+          // This tween makes a more reliable transition to full opacity
           this.tweens.add({
             targets: playerSprite,
             alpha: 1,
-            duration: 0, // Instant change
+            duration: 100, // Slightly longer duration helps ensure it's applied
+            ease: 'Linear',
             onComplete: () => {
-              playerSprite.alpha = 1; // Set it again to be extra sure
-              console.log(`[CLIENT] Player ${serverPlayer.id} opacity forcefully restored to 1`);
+              // One more time to be absolutely sure
+              if (playerSprite && playerSprite.active) {
+                playerSprite.alpha = 1;
+                console.log(`[CLIENT] Player ${serverPlayer.id} opacity restored to 1`);
+              }
             }
           });
         }
