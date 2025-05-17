@@ -644,11 +644,23 @@ function checkCollisions(gameState, room) {
         // Make player invincible
         player.invincible = true;
         
+        // Store player ID for reliable reference in the timeout
+        const playerId = player.id;
+        
         // Reset invincibility after 2 seconds
         setTimeout(() => {
-          const updatedPlayer = gameState.players.find(p => p.id === player.id);
-          if (updatedPlayer) {
-            updatedPlayer.invincible = false;
+          try {
+            // Get the current room data again, as it may have changed
+            const currentRoom = getRoomData(room.id);
+            if (!currentRoom || !currentRoom.gameState) return;
+            
+            // Find player in the current game state
+            const updatedPlayer = currentRoom.gameState.players.find(p => p.id === playerId);
+            if (updatedPlayer) {
+              updatedPlayer.invincible = false;
+            }
+          } catch (error) {
+            console.error(`Error resetting invincibility for player ${playerId}:`, error);
           }
         }, 2000);
       }
