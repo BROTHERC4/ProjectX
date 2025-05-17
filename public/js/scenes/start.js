@@ -355,6 +355,7 @@ class Start extends Phaser.Scene {
         playerSprite.playerId = serverPlayer.id;
         playerSprite.isCurrentPlayer = serverPlayer.id === this.playerId;
         playerSprite.alpha = 1; // Ensure starting with full opacity
+        playerSprite.isInvincible = false; // Initialize invincibility state
         
         // Add to group
         this.players.add(playerSprite);
@@ -397,8 +398,8 @@ class Start extends Phaser.Scene {
           });
         }
       } else {
-        // If no longer invincible, restore full opacity
-        if (playerSprite.isInvincible || playerSprite.alpha < 1) {
+        // If player was invincible but no longer is, restore full opacity
+        if (playerSprite.isInvincible) {
           console.log(`[CLIENT] Player ${serverPlayer.id} is no longer invincible, restoring opacity`);
           playerSprite.isInvincible = false;
           
