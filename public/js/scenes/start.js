@@ -395,23 +395,33 @@ class Start extends Phaser.Scene {
         if (playerSprite.isInvincible) {
           console.log(`[CLIENT] Player ${serverPlayer.id} is no longer invincible, restoring opacity`);
           playerSprite.isInvincible = false;
-          // Kill any existing tweens including the blink tween
+          
+          // Kill ALL tweens on this sprite
           this.tweens.killTweensOf(playerSprite);
           playerSprite.blinkTween = null;
-          // Set alpha immediately AND use a tween to ensure it's applied
+          
+          // Set alpha immediately
           playerSprite.alpha = 1;
-          // This tween makes a more reliable transition to full opacity
-          this.tweens.add({
-            targets: playerSprite,
-            alpha: 1,
-            duration: 100, // Slightly longer duration helps ensure it's applied
-            ease: 'Linear',
-            onComplete: () => {
-              // One more time to be absolutely sure
-              if (playerSprite && playerSprite.active) {
-                playerSprite.alpha = 1;
-                console.log(`[CLIENT] Player ${serverPlayer.id} opacity restored to 1`);
-              }
+          
+          // Add a small delay before starting the restoration tween
+          this.time.delayedCall(50, () => {
+            if (playerSprite && playerSprite.active) {
+              // Create a more forceful restoration tween
+              this.tweens.add({
+                targets: playerSprite,
+                alpha: 1,
+                duration: 200,
+                ease: 'Power2',
+                onStart: () => {
+                  playerSprite.alpha = 1; // Force alpha to 1 at start
+                },
+                onComplete: () => {
+                  if (playerSprite && playerSprite.active) {
+                    playerSprite.alpha = 1;
+                    console.log(`[CLIENT] Player ${serverPlayer.id} opacity restored to 1`);
+                  }
+                }
+              });
             }
           });
         }
