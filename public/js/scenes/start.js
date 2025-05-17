@@ -415,12 +415,6 @@ class Start extends Phaser.Scene {
                 onStart: () => {
                   playerSprite.alpha = 1; // Force alpha to 1 at start
                 },
-                onComplete: () => {
-                  if (playerSprite && playerSprite.active) {
-                    playerSprite.alpha = 1;
-                    console.log(`[CLIENT] Player ${serverPlayer.id} opacity restored to 1`);
-                  }
-                }
               });
             }
           });
