@@ -354,6 +354,7 @@ class Start extends Phaser.Scene {
         playerSprite.setScale(0.15);
         playerSprite.playerId = serverPlayer.id;
         playerSprite.isCurrentPlayer = serverPlayer.id === this.playerId;
+        playerSprite.alpha = 1; // Ensure starting with full opacity
         
         // Add to group
         this.players.add(playerSprite);
@@ -370,17 +371,15 @@ class Start extends Phaser.Scene {
         console.log(`[CLIENT] Player ${serverPlayer.id} pos:`, serverPlayer.position);
       }
       
-      // Update visibility based on player invincibility
+      // Update visibility based on player invincibility state
       if (serverPlayer.invincible) {
         // If the player just became invincible, start blinking animation
         if (!playerSprite.isInvincible) {
           playerSprite.isInvincible = true;
           console.log(`[CLIENT] Player ${serverPlayer.id} became invincible`);
           
-          // Clear any existing tween
-          if (playerSprite.blinkTween) {
-            this.tweens.remove(playerSprite.blinkTween);
-          }
+          // Clear any existing tween - ensure all tweens on this sprite are removed
+          this.tweens.killTweensOf(playerSprite);
           
           // Create blinking effect for invincibility
           playerSprite.blinkTween = this.tweens.add({
@@ -399,18 +398,25 @@ class Start extends Phaser.Scene {
         }
       } else {
         // If no longer invincible, restore full opacity
-        if (playerSprite.isInvincible) {
+        if (playerSprite.isInvincible || playerSprite.alpha < 1) {
           console.log(`[CLIENT] Player ${serverPlayer.id} is no longer invincible, restoring opacity`);
           playerSprite.isInvincible = false;
           
-          // Clean up any ongoing animations
-          if (playerSprite.blinkTween) {
-            this.tweens.remove(playerSprite.blinkTween);
-            playerSprite.blinkTween = null;
-          }
+          // Use more aggressive approach to kill all tweens and restore opacity
+          this.tweens.killTweensOf(playerSprite);
+          playerSprite.blinkTween = null;
           
-          // Force restore full opacity
+          // Force restore full opacity (apply twice to ensure it takes effect)
           playerSprite.alpha = 1;
+          this.tweens.add({
+            targets: playerSprite,
+            alpha: 1,
+            duration: 0, // Instant change
+            onComplete: () => {
+              playerSprite.alpha = 1; // Set it again to be extra sure
+              console.log(`[CLIENT] Player ${serverPlayer.id} opacity forcefully restored to 1`);
+            }
+          });
         }
       }
     });
