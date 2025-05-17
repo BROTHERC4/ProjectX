@@ -643,26 +643,37 @@ function checkCollisions(gameState, room) {
         
         // Make player invincible
         player.invincible = true;
+        console.log(`[SERVER] Player ${player.id} is now invincible`);
         
-        // Store player ID for reliable reference in the timeout
+        // Store player ID and room ID for reliable reference in the timeout
         const playerId = player.id;
+        const roomId = room.id;
         
-        // Reset invincibility after 2 seconds
+        // Reset invincibility after 1.5 seconds (reduced from 2 seconds)
         setTimeout(() => {
           try {
             // Get the current room data again, as it may have changed
-            const currentRoom = getRoomData(room.id);
-            if (!currentRoom || !currentRoom.gameState) return;
+            const currentRoom = getRoomData(roomId);
+            if (!currentRoom || !currentRoom.gameState) {
+              console.log(`[SERVER] Couldn't find room ${roomId} to reset invincibility for player ${playerId}`);
+              return;
+            }
             
             // Find player in the current game state
             const updatedPlayer = currentRoom.gameState.players.find(p => p.id === playerId);
             if (updatedPlayer) {
               updatedPlayer.invincible = false;
+              console.log(`[SERVER] Player ${playerId} invincibility reset to false`);
+              
+              // Force an immediate game state update to clients
+              io.to(roomId).emit('game_state', currentRoom.gameState);
+            } else {
+              console.log(`[SERVER] Couldn't find player ${playerId} in room ${roomId} to reset invincibility`);
             }
           } catch (error) {
-            console.error(`Error resetting invincibility for player ${playerId}:`, error);
+            console.error(`[SERVER] Error resetting invincibility for player ${playerId}:`, error);
           }
-        }, 2000);
+        }, 1500);
       }
     });
     

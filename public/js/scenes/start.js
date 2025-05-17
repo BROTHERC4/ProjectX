@@ -365,8 +365,8 @@ class Start extends Phaser.Scene {
       playerSprite.x = serverPlayer.position.x;
       playerSprite.y = serverPlayer.position.y;
       
-      // Debug log
-      if (this.DEBUG || true) {
+      // Debug log position updates only when needed
+      if (this.DEBUG) {
         console.log(`[CLIENT] Player ${serverPlayer.id} pos:`, serverPlayer.position);
       }
       
@@ -375,6 +375,7 @@ class Start extends Phaser.Scene {
         // If the player just became invincible, start blinking animation
         if (!playerSprite.isInvincible) {
           playerSprite.isInvincible = true;
+          console.log(`[CLIENT] Player ${serverPlayer.id} became invincible`);
           
           // Clear any existing tween
           if (playerSprite.blinkTween) {
@@ -391,18 +392,26 @@ class Start extends Phaser.Scene {
             onComplete: () => {
               if (playerSprite && playerSprite.active) {
                 playerSprite.alpha = 0.5; // End on partially transparent
+                console.log(`[CLIENT] Player ${serverPlayer.id} blink animation complete, set alpha 0.5`);
               }
             }
           });
         }
       } else {
-        // If no longer invincible, stop any blinking and reset alpha
-        playerSprite.isInvincible = false;
-        if (playerSprite.blinkTween) {
-          this.tweens.remove(playerSprite.blinkTween);
-          playerSprite.blinkTween = null;
+        // If no longer invincible, restore full opacity
+        if (playerSprite.isInvincible) {
+          console.log(`[CLIENT] Player ${serverPlayer.id} is no longer invincible, restoring opacity`);
+          playerSprite.isInvincible = false;
+          
+          // Clean up any ongoing animations
+          if (playerSprite.blinkTween) {
+            this.tweens.remove(playerSprite.blinkTween);
+            playerSprite.blinkTween = null;
+          }
+          
+          // Force restore full opacity
+          playerSprite.alpha = 1;
         }
-        playerSprite.alpha = 1;
       }
     });
     
