@@ -29,7 +29,7 @@ class CreditsScene extends Phaser.Scene {
     const creditsText = [
       "Game Development",
       "----------------",
-      "Programming and Game Design: [Your Name]",
+      "Programming and Game Design: JC",
       "",
       "Assets",
       "------",
