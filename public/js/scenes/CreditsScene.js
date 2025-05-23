@@ -9,12 +9,23 @@ class CreditsScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('background', 'assets/space.png');
+    // Load background images using background manager
+    if (window.backgroundManager) {
+      window.backgroundManager.preloadBackgrounds(this);
+    } else {
+      // Fallback if background manager is not available
+      this.load.image('background', 'assets/space.png');
+    }
   }
 
   create() {
-    // Background
-    this.add.tileSprite(400, 300, 800, 600, 'background');
+    // Background using background manager
+    if (window.backgroundManager) {
+      this.background = window.backgroundManager.createBackground(this);
+    } else {
+      // Fallback if background manager is not available
+      this.background = this.add.tileSprite(400, 300, 800, 600, 'background');
+    }
     
     // Title
     this.add.text(400, 50, 'Credits', {

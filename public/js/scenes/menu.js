@@ -21,8 +21,14 @@ class MenuScene extends Phaser.Scene {
       this.errorMessage = `Failed to load game asset: ${fileObj.key}`;
     });
 
-    // Load assets
-    this.load.image('background', 'assets/space.png');
+    // Load background images using background manager
+    if (window.backgroundManager) {
+      window.backgroundManager.preloadBackgrounds(this);
+    } else {
+      // Fallback if background manager is not available
+      this.load.image('background', 'assets/space.png');
+    }
+    
     this.load.image('logo', 'assets/logo.png');
     
     // Load Google Fonts using WebFont Loader
@@ -47,8 +53,13 @@ class MenuScene extends Phaser.Scene {
   }
   
   createMenuUI() {
-    // Add background
-    this.add.tileSprite(400, 300, 800, 600, 'background');
+    // Add background using background manager
+    if (window.backgroundManager) {
+      this.background = window.backgroundManager.createBackground(this);
+    } else {
+      // Fallback if background manager is not available
+      this.background = this.add.tileSprite(400, 300, 800, 600, 'background');
+    }
     
     // Add logo or title
     const title = this.add.text(400, 100, 'ProjectX', {

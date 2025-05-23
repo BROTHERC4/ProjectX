@@ -25,12 +25,23 @@ class GameOverScene extends Phaser.Scene {
       this.scene.start('MenuScene', { error: `Failed to load game asset: ${fileObj.key}` });
     });
     
-    this.load.image('background', 'assets/space.png');
+    // Load background images using background manager
+    if (window.backgroundManager) {
+      window.backgroundManager.preloadBackgrounds(this);
+    } else {
+      // Fallback if background manager is not available
+      this.load.image('background', 'assets/space.png');
+    }
   }
 
   create() {
-    // Add background
-    this.add.tileSprite(400, 300, 800, 600, 'background');
+    // Add background using background manager
+    if (window.backgroundManager) {
+      this.background = window.backgroundManager.createBackground(this);
+    } else {
+      // Fallback if background manager is not available
+      this.background = this.add.tileSprite(400, 300, 800, 600, 'background');
+    }
     
     // Game over title
     this.add.text(400, 100, 'GAME OVER', {

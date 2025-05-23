@@ -20,15 +20,26 @@ class LobbyScene extends Phaser.Scene {
       this.scene.start('MenuScene', { error: `Failed to load game assets. Please refresh the page.` });
     });
 
-    // Load assets needed for the lobby
-    this.load.image('background', 'assets/space.png');
+    // Load background images using background manager
+    if (window.backgroundManager) {
+      window.backgroundManager.preloadBackgrounds(this);
+    } else {
+      // Fallback if background manager is not available
+      this.load.image('background', 'assets/space.png');
+    }
+    
     this.load.image('ship', 'assets/spaceship.png');
     this.load.image('ship-red', 'assets/spaceshipred.png');
   }
 
   create() {
-    // Background
-    this.add.tileSprite(400, 300, 800, 600, 'background');
+    // Background using background manager
+    if (window.backgroundManager) {
+      this.background = window.backgroundManager.createBackground(this);
+    } else {
+      // Fallback if background manager is not available
+      this.background = this.add.tileSprite(400, 300, 800, 600, 'background');
+    }
     
     // Title text
     this.add.text(400, 50, 'Game Lobby', {

@@ -6,7 +6,15 @@ class SinglePlayerStart extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('background', 'assets/space.png');
+        // Reset background selection for new game and load all backgrounds
+        if (window.backgroundManager) {
+            window.backgroundManager.reset();
+            window.backgroundManager.preloadBackgrounds(this);
+        } else {
+            // Fallback if background manager is not available
+            this.load.image('background', 'assets/space.png');
+        }
+        
         this.load.image('heart', 'assets/heart.png');
         
         // Load the spaceship as a regular image, not a spritesheet
@@ -81,7 +89,13 @@ class SinglePlayerStart extends Phaser.Scene {
         // Create animations for the enemies
         this.createAnimations();
         
-        this.background = this.add.tileSprite(400, 300, 800, 600, 'background');
+        // Background using background manager
+        if (window.backgroundManager) {
+            this.background = window.backgroundManager.createBackground(this);
+        } else {
+            // Fallback if background manager is not available
+            this.background = this.add.tileSprite(400, 300, 800, 600, 'background');
+        }
 
         // Initialize score and lives
         this.score = 0;
