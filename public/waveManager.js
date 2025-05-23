@@ -6,7 +6,7 @@
 class WaveManager {
   constructor() {
     this.currentWave = 1;
-    this.enemiesPerWave = 32; // Starting number
+    this.enemiesPerWave = 32; // Classic layout has 32 enemies (8x4 rows)
     this.difficultyScaler = 0.1; // How much difficulty increases per wave
     this.waveTransition = false;
     this.waveStartDelay = 2000; // Delay between waves in ms
@@ -55,6 +55,13 @@ class WaveManager {
    */
   generateWave() {
     const enemies = [];
+    
+    // Wave 1: Use classic layout exactly like the original game
+    if (this.currentWave === 1) {
+      return this.generateClassicWave1();
+    }
+    
+    // Later waves: Use procedural generation with variations
     const enemyCount = this.getEnemyCountForWave();
     const formation = this.getRandomFormation();
     
@@ -82,6 +89,82 @@ class WaveManager {
         moveTimer: i * 50, // Stagger movement slightly
         lastShot: 0,
         waveNumber: this.currentWave
+      });
+    }
+    
+    return enemies;
+  }
+
+  /**
+   * Generate the classic Wave 1 layout exactly like the original game
+   * @returns {Array} Array of enemy objects in classic formation
+   */
+  generateClassicWave1() {
+    const enemies = [];
+    
+    console.log(`[WAVE] Generating classic Wave 1 layout`);
+    
+    // Wasp row (top row) - 8 wasps at y=80
+    for (let i = 0; i < 8; i++) {
+      enemies.push({
+        id: `wasp-1-${i}`,
+        type: 'wasp',
+        position: { x: 100 + i * 80, y: 80 },
+        originalPosition: { x: 100 + i * 80, y: 80 },
+        health: 1,
+        points: 50,
+        movePattern: 'zigzag',
+        moveTimer: i * 100,
+        lastShot: 0,
+        waveNumber: 1
+      });
+    }
+    
+    // Large jellyfish row (second row) - 8 large jellyfish at y=150
+    for (let i = 0; i < 8; i++) {
+      enemies.push({
+        id: `jellyfish-large-1-${i}`,
+        type: 'jellyfish-large',
+        position: { x: 100 + i * 80, y: 150 },
+        originalPosition: { x: 100 + i * 80, y: 150 },
+        health: 3,
+        points: 30,
+        movePattern: 'sineWave',
+        moveTimer: i * 100,
+        lastShot: 0,
+        waveNumber: 1
+      });
+    }
+    
+    // Medium jellyfish row (third row) - 8 medium jellyfish at y=220
+    for (let i = 0; i < 8; i++) {
+      enemies.push({
+        id: `jellyfish-medium-1-${i}`,
+        type: 'jellyfish-medium',
+        position: { x: 100 + i * 80, y: 220 },
+        originalPosition: { x: 100 + i * 80, y: 220 },
+        health: 2,
+        points: 20,
+        movePattern: 'standard',
+        moveTimer: 0,
+        lastShot: 0,
+        waveNumber: 1
+      });
+    }
+    
+    // Tiny jellyfish row (bottom row) - 8 tiny jellyfish at y=290
+    for (let i = 0; i < 8; i++) {
+      enemies.push({
+        id: `jellyfish-tiny-1-${i}`,
+        type: 'jellyfish-tiny',
+        position: { x: 100 + i * 80, y: 290 },
+        originalPosition: { x: 100 + i * 80, y: 290 },
+        health: 1,
+        points: 10,
+        movePattern: 'swooping',
+        moveTimer: i * 150,
+        lastShot: 0,
+        waveNumber: 1
       });
     }
     
@@ -128,9 +211,9 @@ class WaveManager {
    * @returns {number} Number of enemies to spawn
    */
   getEnemyCountForWave() {
-    // Gradually increase enemy count but cap it for performance
-    const baseCount = this.enemiesPerWave;
-    const waveBonus = Math.floor(this.currentWave * 2);
+    // Start with classic count (32 enemies) and gradually increase
+    const baseCount = 32; // Same as classic Wave 1
+    const waveBonus = Math.floor((this.currentWave - 1) * 1.5); // Slower increase
     const maxEnemies = 48; // Performance cap
     
     return Math.min(baseCount + waveBonus, maxEnemies);
@@ -230,13 +313,21 @@ class WaveManager {
 
   generateGridFormation(count, startX, startY, spacingX, spacingY) {
     const positions = [];
-    const cols = Math.ceil(Math.sqrt(count));
+    
+    // For later waves, try to maintain a 4-row structure like the classic layout
+    const rows = 4;
+    const cols = Math.ceil(count / rows);
     
     for (let i = 0; i < count; i++) {
       const row = Math.floor(i / cols);
       const col = i % cols;
+      
+      // Center the formation if we have fewer enemies in the last row
+      const rowEnemies = Math.min(cols, count - row * cols);
+      const rowStartX = startX + (cols - rowEnemies) * spacingX / 2;
+      
       positions.push({
-        x: startX + col * spacingX,
+        x: rowStartX + col * spacingX,
         y: startY + row * spacingY
       });
     }
