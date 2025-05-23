@@ -15,6 +15,18 @@ window.addEventListener('DOMContentLoaded', function() {
       width: 800,
       height: 600,
       parent: 'game-container',
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        min: {
+          width: 320,
+          height: 240
+        },
+        max: {
+          width: 1600,
+          height: 1200
+        }
+      },
       dom: {
         createContainer: true
       },

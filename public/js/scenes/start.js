@@ -43,6 +43,9 @@ class Start extends Phaser.Scene {
     // Load all the same assets as the single player version
     this.load.image('heart', 'assets/heart.png');
     
+    // Load mobile controls assets
+    this.load.image('pointer', 'assets/Pointer.png');
+    
     // Load the spaceship as a regular image, not a spritesheet
     this.load.image('ship', 'assets/spaceship.png');
     this.load.image('ship-red', 'assets/spaceshipred.png');
@@ -134,6 +137,9 @@ class Start extends Phaser.Scene {
     
     // Set up socket event handlers
     this.setupSocketHandlers();
+    
+    // Initialize mobile controls
+    this.mobileControls = new MobileControls(this);
   }
   
   createAnimations() {
@@ -444,6 +450,11 @@ class Start extends Phaser.Scene {
         // Add to group
         this.players.add(playerSprite);
         
+        // Setup camera follow for current player on mobile
+        if (serverPlayer.id === this.playerId && this.mobileControls) {
+          this.mobileControls.setupCameraFollow(playerSprite);
+        }
+        
         if (this.DEBUG) console.log('Created player:', serverPlayer.id);
       }
       
@@ -666,11 +677,25 @@ class Start extends Phaser.Scene {
     // Previous input state to detect changes
     const prevInput = this._lastInput || {};
     
-    // Handle player input with the same control scheme as singleplayer
+    // Handle player input with the same control scheme as singleplayer (keyboard + mobile)
+    let leftPressed = this.cursors.left.isDown;
+    let rightPressed = this.cursors.right.isDown;
+    let firePressed = this.fireKey.isDown && !this.playerInvincible;
+    
+    // Check mobile controls if available
+    if (this.mobileControls && this.mobileControls.isMobile) {
+      const mobileInput = this.mobileControls.getInput();
+      if (mobileInput) {
+        leftPressed = leftPressed || mobileInput.left;
+        rightPressed = rightPressed || mobileInput.right;
+        firePressed = firePressed || mobileInput.fire;
+      }
+    }
+    
     const input = {
-      left: this.cursors.left.isDown,
-      right: this.cursors.right.isDown,
-      fire: this.fireKey.isDown && !this.playerInvincible,
+      left: leftPressed,
+      right: rightPressed,
+      fire: firePressed,
       // Add precise current time to allow server to calculate exact firing rate
       time: Date.now()
     };
@@ -692,6 +717,11 @@ class Start extends Phaser.Scene {
     
     // Clean up any remaining particles
     this.cleanupAllParticles();
+    
+    // Hide mobile controls if active
+    if (this.mobileControls) {
+      this.mobileControls.hideControls();
+    }
     
     // Hide/make game objects less visible
     this.hideGameObjects();

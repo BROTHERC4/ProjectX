@@ -15,6 +15,9 @@ class SinglePlayerStart extends Phaser.Scene {
             this.load.image('background', 'assets/space.png');
         }
         
+        // Load mobile controls assets
+        this.load.image('pointer', 'assets/Pointer.png');
+        
         this.load.image('heart', 'assets/heart.png');
         
         // Load the spaceship as a regular image, not a spritesheet
@@ -171,6 +174,12 @@ class SinglePlayerStart extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
         this.playerSpeed = 200;
+        
+        // Initialize mobile controls
+        this.mobileControls = new MobileControls(this);
+        
+        // Setup camera follow for mobile if needed
+        this.mobileControls.setupCameraFollow(this.player);
 
         // Create player bullets
         this.bullets = this.physics.add.group({
@@ -287,17 +296,32 @@ class SinglePlayerStart extends Phaser.Scene {
         // Ensure player exists and is active
         if (!this.player || !this.player.active) return;
 
-        // Handle player input
-        if (this.cursors.left.isDown) {
+        // Handle player input (keyboard + mobile)
+        let leftPressed = this.cursors.left.isDown;
+        let rightPressed = this.cursors.right.isDown;
+        let firePressed = this.fireKey.isDown;
+        
+        // Check mobile controls if available
+        if (this.mobileControls && this.mobileControls.isMobile) {
+            const mobileInput = this.mobileControls.getInput();
+            if (mobileInput) {
+                leftPressed = leftPressed || mobileInput.left;
+                rightPressed = rightPressed || mobileInput.right;
+                firePressed = firePressed || mobileInput.fire;
+            }
+        }
+        
+        // Apply movement
+        if (leftPressed) {
             this.player.setVelocityX(-this.playerSpeed);
-        } else if (this.cursors.right.isDown) {
+        } else if (rightPressed) {
             this.player.setVelocityX(this.playerSpeed);
         } else {
             this.player.setVelocityX(0);
         }
 
-        // Continuous firing when space is held down
-        if (this.fireKey.isDown && time > this.lastFired + this.fireRate) {
+        // Continuous firing when space is held down or mobile fire is pressed
+        if (firePressed && time > this.lastFired + this.fireRate) {
             this.fireBullet();
             this.lastFired = time;
         }
@@ -833,6 +857,11 @@ class SinglePlayerStart extends Phaser.Scene {
         
         // Clean up any remaining particles
         this.cleanupAllParticles();
+        
+        // Hide mobile controls if active
+        if (this.mobileControls) {
+            this.mobileControls.hideControls();
+        }
         
         // Set game over flag
         this.gameOver = true;
