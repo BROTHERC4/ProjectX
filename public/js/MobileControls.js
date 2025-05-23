@@ -108,10 +108,10 @@ class MobileControls {
       this.rightButton.clearTint();
     });
     
-    // Set up fire zone (tap anywhere else to shoot)
+    // Set up fire zone (tap anywhere else to shoot) - IMPROVED for simultaneous input
     this.fireZone.on('pointerdown', (pointer) => {
-      // Check if tap is not on control buttons
-      const buttonRadius = 50; // Area around buttons to ignore
+      // Check if tap is not on control buttons - reduced exclusion zone for better simultaneous input
+      const buttonRadius = 30; // Reduced from 50 to allow easier simultaneous input
       
       // Check left button area (bottom left)
       const leftButtonDist = Math.abs(pointer.x - 80) + Math.abs(pointer.y - BUTTON_Y);
@@ -126,10 +126,28 @@ class MobileControls {
       this.firePressed = true;
       // Create a brief visual effect at tap location
       this.createFireEffect(pointer.x, pointer.y);
+      console.log('[MOBILE] Fire started at:', pointer.x, pointer.y, 'Movement:', this.leftPressed, this.rightPressed);
     });
     
-    this.fireZone.on('pointerup', () => {
+    this.fireZone.on('pointerup', (pointer) => {
       this.firePressed = false;
+      console.log('[MOBILE] Fire stopped');
+    });
+    
+    // Add pointer move for drag-to-continue shooting
+    this.fireZone.on('pointermove', (pointer) => {
+      // If already firing, keep firing (allows for drag-to-continue-shooting)
+      if (this.firePressed) {
+        // Still check if moved onto buttons
+        const buttonRadius = 30;
+        const leftButtonDist = Math.abs(pointer.x - 80) + Math.abs(pointer.y - BUTTON_Y);
+        const rightButtonDist = Math.abs(pointer.x - (SCREEN_WIDTH - 80)) + Math.abs(pointer.y - BUTTON_Y);
+        
+        if (leftButtonDist < buttonRadius || rightButtonDist < buttonRadius) {
+          this.firePressed = false; // Stop firing if moved onto buttons
+          console.log('[MOBILE] Fire stopped - moved to button area');
+        }
+      }
     });
     
     this.controlsVisible = true;
