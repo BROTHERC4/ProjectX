@@ -265,17 +265,17 @@ class SinglePlayerStart extends Phaser.Scene {
         if (this.gameOver) return;
 
         // Handle player input
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-this.playerSpeed);
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(this.playerSpeed);
-        } else {
-            this.player.setVelocityX(0);
-        }
+                if (this.cursors.left.isDown) {
+                    this.player.setVelocityX(-this.playerSpeed);
+                } else if (this.cursors.right.isDown) {
+                    this.player.setVelocityX(this.playerSpeed);
+                } else {
+                    this.player.setVelocityX(0);
+                }
 
         // Continuous firing when space is held down
         if (this.fireKey.isDown && time > this.lastFired + this.fireRate) {
-            this.fireBullet();
+                    this.fireBullet();
             this.lastFired = time;
         }
 
@@ -292,9 +292,9 @@ class SinglePlayerStart extends Phaser.Scene {
                 
                 // Remove bullets that go off screen
                 if (bullet.y > 650) {
-                    bullet.setActive(false);
-                    bullet.setVisible(false);
-                }
+                bullet.setActive(false);
+                bullet.setVisible(false);
+            }
             }
         });
 
@@ -305,9 +305,9 @@ class SinglePlayerStart extends Phaser.Scene {
                 
                 // Remove bullets that go off screen
                 if (bullet.y < -20) {
-                    bullet.setActive(false);
-                    bullet.setVisible(false);
-                }
+                bullet.setActive(false);
+                bullet.setVisible(false);
+            }
             }
         });
     }
@@ -473,7 +473,7 @@ class SinglePlayerStart extends Phaser.Scene {
                 enemy.waveNumber = enemyInfo.waveNumber;
                 enemy.setScale(0.25);
                 this.enemies.add(enemy);
-            }
+        }
         });
     }
 
