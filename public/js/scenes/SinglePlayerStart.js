@@ -273,6 +273,11 @@ class SinglePlayerStart extends Phaser.Scene {
     }
 
     update(time, delta) {
+        // Background scrolling
+        if (this.background) {
+            this.background.tilePositionY -= 0.5;
+        }
+        
         // Skip if game is over
         if (this.gameOver) return;
 

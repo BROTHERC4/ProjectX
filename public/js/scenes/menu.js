@@ -424,6 +424,13 @@ class MenuScene extends Phaser.Scene {
     });
   }
   
+  update() {
+    // Animate background scrolling for visual consistency
+    if (this.background) {
+      this.background.tilePositionY -= 0.3;
+    }
+  }
+  
   shutdown() {
     // Clean up DOM elements when scene changes
     const inputs = document.querySelectorAll('input');
