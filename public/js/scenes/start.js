@@ -200,7 +200,7 @@ class Start extends Phaser.Scene {
       fontFamily: '"Roboto", sans-serif',
       fontSize: '20px',
       color: '#ffff00'
-    }).setOrigin(0.5, 0);
+    }).setOrigin(0.5, 0).setDepth(100);
     
     // We'll populate this in updateScoreboard based on players
     this.playerScores = {};
@@ -221,7 +221,7 @@ class Start extends Phaser.Scene {
         fontFamily: '"Roboto", sans-serif',
         fontSize: '18px',
         color: player.id === this.playerId ? '#ffff00' : '#ffffff'
-      }).setOrigin(0, 0.5);
+      }).setOrigin(0, 0.5).setDepth(100);
       
       this.playerScores[player.id] = scoreText;
       this.scoreboard.add(scoreText);
@@ -243,27 +243,33 @@ class Start extends Phaser.Scene {
     for (let i = 0; i < currentPlayerLives; i++) {
       const heart = this.livesGroup.create(16 + (i * 30), 70, 'heart');
       heart.setScale(0.5);
+      heart.setDepth(100);
     }
   }
   
   createGameOverText() {
+    // Create semi-transparent overlay to dim the game
+    this.gameOverOverlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.7)
+      .setVisible(false)
+      .setDepth(1000); // High depth to be on top
+
     this.gameOverText = this.add.text(400, 200, 'GAME OVER', {
       fontSize: '64px',
       fill: '#fff',
       fontFamily: '"Press Start 2P", cursive'
-    }).setOrigin(0.5).setVisible(false);
+    }).setOrigin(0.5).setVisible(false).setDepth(1001);
 
     this.finalScoreText = this.add.text(400, 300, '', {
       fontSize: '32px',
       fill: '#fff',
       fontFamily: '"Roboto", sans-serif'
-    }).setOrigin(0.5).setVisible(false);
+    }).setOrigin(0.5).setVisible(false).setDepth(1001);
 
     this.winnerText = this.add.text(400, 350, '', {
       fontSize: '32px',
       fill: '#fff',
       fontFamily: '"Orbitron", sans-serif'
-    }).setOrigin(0.5).setVisible(false);
+    }).setOrigin(0.5).setVisible(false).setDepth(1001);
 
     this.backToLobbyText = this.add.text(400, 450, 'Back to Lobby', {
       fontSize: '24px',
@@ -274,6 +280,7 @@ class Start extends Phaser.Scene {
     })
       .setOrigin(0.5)
       .setVisible(false)
+      .setDepth(1001)
       .setInteractive({ useHandCursor: true })
       .on('pointerover', () => this.backToLobbyText.setStyle({ backgroundColor: '#3333aa' }))
       .on('pointerout', () => this.backToLobbyText.setStyle({ backgroundColor: '#222266' }))
@@ -686,6 +693,12 @@ class Start extends Phaser.Scene {
     // Clean up any remaining particles
     this.cleanupAllParticles();
     
+    // Hide/make game objects less visible
+    this.hideGameObjects();
+    
+    // Show overlay first
+    this.gameOverOverlay.setVisible(true);
+    
     // Show game over text
     this.gameOverText.setVisible(true);
     
@@ -818,6 +831,35 @@ class Start extends Phaser.Scene {
       if (emitter && emitter.active) {
         emitter.destroy();
       }
+    });
+  }
+  
+  hideGameObjects() {
+    // Make all game objects much less visible but don't destroy them
+    // since the server might still be sending updates
+    
+    // Hide all enemies
+    this.enemies.getChildren().forEach(enemy => {
+      enemy.setAlpha(0.2);
+    });
+    
+    // Hide all bullets
+    this.bullets.getChildren().forEach(bullet => {
+      bullet.setAlpha(0.2);
+    });
+    
+    this.enemyBullets.getChildren().forEach(bullet => {
+      bullet.setAlpha(0.2);
+    });
+    
+    // Hide all players
+    this.players.getChildren().forEach(player => {
+      player.setAlpha(0.2);
+    });
+    
+    // Hide barriers
+    this.barrierPieces.getChildren().forEach(barrier => {
+      barrier.setAlpha(0.2);
     });
   }
   

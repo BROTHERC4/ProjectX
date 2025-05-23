@@ -590,26 +590,26 @@ class SinglePlayerStart extends Phaser.Scene {
                 }
             } else {
                 // Normal enemy movement patterns once in formation
-                enemy.x += moveSpeed * this.enemyDirection;
+            enemy.x += moveSpeed * this.enemyDirection;
                 
-                switch(enemy.movePattern) {
-                    case 'zigzag':
-                        enemy.moveTimer += delta;
-                        enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 300) * 15;
+            switch(enemy.movePattern) {
+                case 'zigzag':
+                    enemy.moveTimer += delta;
+                    enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 300) * 15;
                         // Only wasps (zigzag) can shoot, and only when in formation
                         if (!enemy.lastShotTime || time - enemy.lastShotTime > 1800) {
                             if (Phaser.Math.Between(0, 9500) < 5 * delta) {
-                                this.enemyShoot(enemy);
-                                enemy.lastShotTime = time;
-                            }
+                            this.enemyShoot(enemy);
+                            enemy.lastShotTime = time;
                         }
-                        break;
-                    case 'sineWave':
-                    case 'swooping':
-                    case 'standard':
+                    }
+                    break;
+                case 'sineWave':
+                case 'swooping':
+                case 'standard':
                         // All non-wasp enemies have very slow descent once in formation
                         enemy.y += 0.002 * (delta);
-                        break;
+                    break;
                 }
             }
         });
