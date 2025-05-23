@@ -315,8 +315,12 @@ class Start extends Phaser.Scene {
       
       // Debug log explosions being received from server
       if (gameState.explosions && gameState.explosions.length > 0) {
-        console.log(`[CLIENT DEBUG] Received ${gameState.explosions.length} explosions from server:`, 
-          gameState.explosions.map(exp => ({id: exp.id, position: exp.position, type: exp.type})));
+        console.log(`[CLIENT DEBUG] Received ${gameState.explosions.length} explosions from server`);
+        // SAFETY: If too many explosions, something's wrong
+        if (gameState.explosions.length > 20) {
+          console.error(`[CLIENT ERROR] Received too many explosions (${gameState.explosions.length})! This indicates a server bug.`);
+          return; // Skip processing to prevent particle spam
+        }
       }
       
       // Update all game objects
@@ -751,27 +755,17 @@ class Start extends Phaser.Scene {
   }
   
   handleExplosions(explosions) {
-    console.log(`[MULTIPLAYER DEBUG] handleExplosions called with ${explosions.length} explosions:`, explosions);
+    console.log(`[MULTIPLAYER DEBUG] Processing ${explosions.length} explosions`);
     
     explosions.forEach(explosion => {
-      console.log(`[MULTIPLAYER DEBUG] Processing explosion:`, {
-        id: explosion.id,
-        position: explosion.position,
-        type: explosion.type,
-        timeLeft: explosion.timeLeft,
-        alreadyProcessed: this.processedExplosions && this.processedExplosions.includes(explosion.id)
-      });
-      
       // Only create explosions we haven't seen before
       if (!this.processedExplosions || !this.processedExplosions.includes(explosion.id)) {
-        console.log(`[MULTIPLAYER DEBUG] Creating new explosion at (${explosion.position.x}, ${explosion.position.y}) type: ${explosion.type}`);
+        console.log(`[MULTIPLAYER DEBUG] New explosion: (${explosion.position.x}, ${explosion.position.y}) type: ${explosion.type || 'enemy'}`);
         this.createExplosion(explosion.position.x, explosion.position.y, explosion.type);
         
         // Track processed explosions
         this.processedExplosions = this.processedExplosions || [];
         this.processedExplosions.push(explosion.id);
-      } else {
-        console.log(`[MULTIPLAYER DEBUG] Skipping already processed explosion ${explosion.id}`);
       }
     });
     
@@ -783,16 +777,9 @@ class Start extends Phaser.Scene {
   }
   
   createExplosion(x, y, type = 'enemy') {
-    // Add comprehensive debug logging
-    const stack = new Error().stack;
-    console.log(`[PARTICLE DEBUG] createExplosion called!`);
-    console.log(`[PARTICLE DEBUG] Position: (${x}, ${y})`);
-    console.log(`[PARTICLE DEBUG] Type: ${type}`);
-    console.log(`[PARTICLE DEBUG] Call stack:`, stack);
-    
     // Check if position is reasonable
     if (x < -100 || x > 900 || y < -100 || y > 700) {
-      console.warn(`[PARTICLE DEBUG] WARNING: Explosion at extreme position (${x}, ${y}) - this might be the bug!`);
+      console.warn(`[PARTICLE WARNING] Explosion at extreme position (${x}, ${y}) type: ${type}`);
     }
     
     // Don't create explosions for off-screen positions
@@ -801,7 +788,7 @@ class Start extends Phaser.Scene {
       return;
     }
     
-    console.log(`[PARTICLE DEBUG] Creating particle emitter at (${x}, ${y})`);
+    console.log(`[PARTICLE DEBUG] Creating explosion at (${x}, ${y}) type: ${type}`);
     
     // Create a particle explosion effect using barrier-piece texture for all explosions
     const emitter = this.add.particles(x, y, 'barrier-piece', {
@@ -815,16 +802,11 @@ class Start extends Phaser.Scene {
       emitting: false
     });
     
-    console.log(`[PARTICLE DEBUG] Emitter created, exploding with ${type === 'barrier' ? 6 : 8} particles`);
-    
     // Emit all particles at once
     emitter.explode(type === 'barrier' ? 6 : 8);
     
-    console.log(`[PARTICLE DEBUG] Particles exploded, setting cleanup timer`);
-    
     // Clean up more aggressively
     this.time.delayedCall(700, () => { // Reduced from 1000
-      console.log(`[PARTICLE DEBUG] Cleaning up emitter at (${x}, ${y})`);
       if (emitter && emitter.active) {
         emitter.destroy();
       }

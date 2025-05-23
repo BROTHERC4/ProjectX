@@ -312,10 +312,21 @@ function updateGameState(roomId, io) {
   
   // Send updated state to all clients in the room
   if (gameState.explosions && gameState.explosions.length > 0) {
+    // SAFETY: Limit explosions to prevent spam
+    if (gameState.explosions.length > 10) {
+      console.warn(`[SERVER WARNING] Too many explosions (${gameState.explosions.length})! Limiting to 10 most recent.`);
+      gameState.explosions = gameState.explosions.slice(-10); // Keep only last 10
+    }
     console.log(`[SERVER GAME STATE DEBUG] Sending ${gameState.explosions.length} explosions to clients in room ${roomId}:`, 
       gameState.explosions.map(exp => ({id: exp.id, position: exp.position, type: exp.type})));
   }
   io.to(roomId).emit('game_state', gameState);
+  
+  // CRITICAL FIX: Clean up explosions after sending to prevent infinite accumulation
+  if (gameState.explosions && gameState.explosions.length > 0) {
+    console.log(`[SERVER CLEANUP DEBUG] Cleaning up ${gameState.explosions.length} explosions from server gameState`);
+    gameState.explosions = []; // Clear all explosions after sending
+  }
   
   // If game is over, set timeout to end the game after 5 seconds
   if (gameState.gameOver) {
@@ -675,6 +686,7 @@ function checkCollisions(gameState, room, io) {
             gameState.explosions.push({
               id: `explosion-${Date.now()}`,
               position: {...enemy.position},
+              type: 'enemy',
               timeLeft: 500
             });
             console.log(`[SERVER EXPLOSION DEBUG] Explosion added to gameState, total explosions: ${gameState.explosions.length}`);
