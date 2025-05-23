@@ -36,11 +36,26 @@ class CreditsScene extends Phaser.Scene {
       strokeThickness: 6
     }).setOrigin(0.5);
     
-    // Credits content with proper license compliance
+    // Credits content with proper license compliance and AI acknowledgment
     const creditsText = [
+      "ProjectX Multiplayer",
+      "===================",
+      "A retro space shooter inspired by Decimation X",
+      "",
       "Game Development",
       "----------------",
-      "Programming and Game Design: JC",
+      "Programming and Game Design: JC", 
+      "",
+      "AI Development Assistance",
+      "-------------------------",
+      "Claude Sonnet 4: Code architecture, game logic,",
+      "and problem-solving assistance",
+      "",
+      "Cursor AI: AI-powered code editor for rapid",
+      "development, debugging, and code completion",
+      "",
+      "Human creativity combined with AI efficiency",
+      "to create this retro gaming experience",
       "",
       "Asset Credits",
       "-------------",
@@ -52,38 +67,83 @@ class CreditsScene extends Phaser.Scene {
       "Source: opengameart.org/content/heart-1616",
       "License: CC BY 3.0",
       "",
-      "Optional Credits",
-      "----------------",
+      "Optional Credits (Public Domain)",
+      "--------------------------------",
       "Wasp sprite by Spring Spring",
       "Source: opengameart.org/content/wasp-0", 
       "License: CC0 1.0 (Public Domain)",
       "",
       "Space backgrounds by Screaming Brain Studios",
-      "Source: screamingbrainstudios.itch.io/seamless-space-backgrounds",
+      "Source: screamingbrainstudios.itch.io/",
+      "seamless-space-backgrounds",
       "License: CC0 1.0 (Public Domain)",
       "",
       "Spaceship sprites generated using GrokAI",
       "License: CC0 1.0 (Public Domain)",
       "",
-      "Technologies",
-      "------------",
-      "Built with Phaser.js (MIT License)",
+      "Technologies & Platforms",
+      "-----------------------",
+      "Game Engine: Phaser.js 3.60+ (MIT License)",
       "https://phaser.io/",
       "",
-      "Multiplayer functionality with Socket.io (MIT License)",
+      "Multiplayer: Socket.io 4.7+ (MIT License)",
       "https://socket.io/",
       "",
-      "Server powered by Express.js (MIT License)",
+      "Server: Express.js 4.18+ (MIT License)",
       "https://expressjs.com/",
+      "",
+      "Deployment Platform: Railway",
+      "https://railway.app/",
+      "Modern hosting with WebSocket support",
+      "",
+      "Development Environment",
+      "-----------------------",
+      "Visual Studio Code with Cursor AI extension",
+      "Node.js 18+ runtime environment",
+      "Git version control",
+      "GitHub repository hosting",
       "",
       "License Information",
       "-------------------",
       "This game is licensed under GNU GPL v3",
       "All assets are properly licensed and compatible",
       "",
-      "CC BY 3.0: Attribution required",
+      "CC BY 3.0: Attribution required (see above)",
       "CC0 1.0: Public Domain, no attribution required",
-      "MIT: Permissive open source license"
+      "MIT: Permissive open source license",
+      "",
+      "Inspiration",
+      "-----------",
+      "This game was inspired by classic arcade",
+      "space shooters, particularly Decimation X",
+      "by Imphenzia and other retro shmup games",
+      "",
+      "Special Thanks",
+      "--------------",
+      "The OpenGameArt community for quality assets",
+      "Phaser.js community for excellent documentation",
+      "Socket.io team for reliable multiplayer support",
+      "Railway platform for seamless deployment",
+      "",
+      "AI Revolution in Game Development",
+      "--------------------------------",
+      "This project demonstrates the potential",
+      "of AI-assisted programming, where human",
+      "creativity guides AI capabilities to create",
+      "engaging interactive experiences",
+      "",
+      "The future of game development is collaborative:",
+      "Human imagination + AI efficiency = Better games",
+      "",
+      "Thank you for playing!",
+      "---------------------",
+      "Made with 🚀 AI assistance, 💻 human creativity,",
+      "and ☕ lots of coffee",
+      "",
+      "Visit the GitHub repository for source code",
+      "and contribute to the project!",
+      "",
+      "© 2024 - Licensed under GNU GPL v3"
     ];
     
     // Create a container for credits text
@@ -95,7 +155,7 @@ class CreditsScene extends Phaser.Scene {
       lineSpacing: 4
     }).setOrigin(0.5, 0);
 
-    // Calculate max scroll
+    // Calculate max scroll - increased for longer credits
     this.maxScroll = Math.max(0, this.creditsTextObj.height - 360); // 360px visible area
     this.scrollOffset = 0;
 
@@ -127,6 +187,7 @@ class CreditsScene extends Phaser.Scene {
     this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
       this.scrollCredits(deltaY * 0.5);
     });
+    
     // Arrow key scroll
     this.cursors = this.input.keyboard.createCursorKeys();
   }
@@ -144,6 +205,7 @@ class CreditsScene extends Phaser.Scene {
     if (bgSprite) {
       bgSprite.tilePositionY -= 0.2;
     }
+    
     // Arrow key scroll
     if (this.cursors.up.isDown) {
       this.scrollCredits(-3);
