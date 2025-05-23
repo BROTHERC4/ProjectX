@@ -45,7 +45,7 @@ class WaveManager {
     
     // Formation patterns for variety
     this.formations = [
-      'grid', 'vformation', 'diamond', 'wave', 'random', 'columns'
+      'grid', 'vformation', 'diamond', 'random', 'columns'
     ];
   }
 
@@ -302,8 +302,6 @@ class WaveManager {
         return this.generateVFormation(count, startX, startY, spacingX, spacingY);
       case 'diamond':
         return this.generateDiamondFormation(count, startX, startY, spacingX, spacingY);
-      case 'wave':
-        return this.generateWaveFormation(count, startX, startY, spacingX, spacingY);
       case 'columns':
         return this.generateColumnFormation(count, startX, startY, spacingX, spacingY);
       default:
@@ -363,22 +361,6 @@ class WaveManager {
       positions.push({
         x: startX + col * spacingX + offset * (spacingX / 2),
         y: startY + row * spacingY
-      });
-    }
-    
-    return positions;
-  }
-
-  generateWaveFormation(count, startX, startY, spacingX, spacingY) {
-    const positions = [];
-    
-    for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2;
-      const waveOffset = Math.sin(angle) * 30;
-      
-      positions.push({
-        x: startX + i * spacingX,
-        y: startY + waveOffset
       });
     }
     
