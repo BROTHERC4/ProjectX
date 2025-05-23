@@ -313,6 +313,13 @@ class Start extends Phaser.Scene {
     this.socket.on('game_state', (gameState) => {
       if (this.gameOver) return;
       
+      // CHECK FOR GAME OVER - this was missing!
+      if (gameState.gameOver) {
+        console.log('[CLIENT] Game over detected in game_state');
+        this.handleGameOver(gameState);
+        return;
+      }
+      
       // Debug log explosions being received from server
       if (gameState.explosions && gameState.explosions.length > 0) {
         console.log(`[CLIENT DEBUG] Received ${gameState.explosions.length} explosions from server`);
@@ -367,8 +374,9 @@ class Start extends Phaser.Scene {
       this.handleGameOver(data);
     });
 
-    // Handle final results
-    this.socket.on('final_results', (data) => {
+    // Handle final results - FIX: listen for 'game_ended' instead of 'final_results'
+    this.socket.on('game_ended', (data) => {
+      console.log('[CLIENT] Received game_ended event:', data);
       this.showFinalResults(data);
     });
 

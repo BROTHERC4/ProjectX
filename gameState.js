@@ -330,7 +330,9 @@ function updateGameState(roomId, io) {
   
   // If game is over, set timeout to end the game after 5 seconds
   if (gameState.gameOver) {
+    console.log(`[SERVER] Game over detected, starting 5 second countdown for room ${roomId}`);
     setTimeout(() => {
+      console.log(`[SERVER] Ending game and sending final results for room ${roomId}`);
       endGameInRoom(roomId);
       io.to(roomId).emit('game_ended', {
         winner: gameState.winner,
@@ -816,6 +818,7 @@ function checkGameEnd(gameState, room, roomId, io) {
   // Check if all players are out of lives
   const allPlayersDead = gameState.players.every(player => player.lives <= 0);
   if (allPlayersDead) {
+    console.log(`[SERVER] All players dead in room ${roomId}, ending game`);
     gameState.gameOver = true;
     gameState.winner = 'enemies';
     return;

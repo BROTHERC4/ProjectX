@@ -150,7 +150,7 @@ class SocketClient {
     });
     
     this.socket.on('game_ended', (data) => {
-      // console.log('Game ended:', data);
+      console.log('[SOCKET CLIENT] Game ended:', data);
       
       if (this.onGameEnded) {
         this.onGameEnded(data);
