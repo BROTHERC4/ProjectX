@@ -76,6 +76,9 @@ class SinglePlayerStart extends Phaser.Scene {
     }
 
     create() {
+        // Clean up any leftover particles from previous games
+        this.cleanupAllParticles();
+        
         // Game state flags
         this.gameOver = false;
 
@@ -523,9 +526,22 @@ class SinglePlayerStart extends Phaser.Scene {
         let moveDown = false;
         let moveSpeed = this.enemySpeed * delta / 1000;
         
-        // Check if enemies should move down due to edge collision
+        // Clean up any enemies that might be stuck or in invalid states
         this.enemies.children.entries.forEach(enemy => {
             if (!enemy.active) return;
+            
+            // Remove enemies that have somehow gotten too far off screen
+            if (enemy.y > 700 || (enemy.y < -200 && enemy.formationReached)) {
+                console.log('Removing stuck enemy at:', enemy.x, enemy.y);
+                this.enemies.remove(enemy, true, true);
+                enemy.destroy();
+                return;
+            }
+        });
+        
+        // Check if enemies should move down due to edge collision
+        this.enemies.children.entries.forEach(enemy => {
+            if (!enemy.active || !enemy.formationReached) return; // Only check formed enemies for boundaries
             if ((enemy.x < 50 && this.enemyDirection < 0) || 
                 (enemy.x > 750 && this.enemyDirection > 0)) {
                 moveDown = true;
@@ -649,6 +665,10 @@ class SinglePlayerStart extends Phaser.Scene {
     bulletHitEnemy(bullet, enemy) {
         // Skip if either object is not active or game is over
         if (!bullet.active || !enemy.active || this.gameOver) return;
+        
+        // Skip collision if enemy hasn't reached formation yet (prevents off-screen collisions)
+        if (!enemy.formationReached) return;
+        
         // Deactivate the bullet
         bullet.setActive(false);
         bullet.setVisible(false);
@@ -846,6 +866,11 @@ class SinglePlayerStart extends Phaser.Scene {
     }
     
     createExplosion(x, y) {
+        // Don't create explosions for off-screen positions
+        if (x < -50 || x > 850 || y < -50 || y > 650) {
+            return;
+        }
+        
         // New Phaser 3.60+ particle API
         const emitter = this.add.particles(x, y, 'barrier-piece', {
             speed: { min: -100, max: 100 },
@@ -898,6 +923,20 @@ class SinglePlayerStart extends Phaser.Scene {
                 }
             }
         });
+        
+        // Also clean up any orphaned particle systems
+        if (this.add && this.add.particleManager) {
+            try {
+                this.add.particleManager.removeAll();
+            } catch (error) {
+                // Ignore cleanup errors
+            }
+        }
+        
+        // Force garbage collection of particle effects
+        if (this.DEBUG) {
+            console.log("Cleaned up all particle effects");
+        }
     }
 }
 window.SinglePlayerStart = SinglePlayerStart;

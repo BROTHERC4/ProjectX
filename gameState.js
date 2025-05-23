@@ -414,9 +414,22 @@ function updateBullets(gameState, deltaTime) {
  * @param {number} deltaTime - Time since last update
  */
 function updateEnemies(gameState, deltaTime) {
+  // Clean up any enemies that might be stuck or in invalid states
+  gameState.enemies = gameState.enemies.filter(enemy => {
+    // Remove enemies that have somehow gotten too far off screen
+    if (enemy.position.y > 700 || (enemy.position.y < -200 && enemy.formationReached)) {
+      console.log('[SERVER] Removing stuck enemy at:', enemy.position.x, enemy.position.y);
+      return false;
+    }
+    return true;
+  });
+  
   // Check if enemies need to change direction
   let moveDown = false;
   gameState.enemies.forEach(enemy => {
+    // Only check formed enemies for boundaries
+    if (!enemy.formationReached) return;
+    
     if ((enemy.position.x < 50 && gameState.enemyDirection < 0) || 
         (enemy.position.x > SCREEN_WIDTH - 50 && gameState.enemyDirection > 0)) {
       moveDown = true;
@@ -609,6 +622,9 @@ function checkCollisions(gameState, room, io) {
     let hit = false;
     
     gameState.enemies.forEach(enemy => {
+      // Skip collision if enemy hasn't reached formation yet (prevents off-screen collisions)
+      if (!enemy.formationReached) return;
+      
       // Use more precise collision detection with appropriate hitbox sizes
       const hitboxSize = enemy.type === 'wasp' ? 25 : 
                         enemy.type === 'jellyfish-large' ? 30 :
@@ -643,13 +659,16 @@ function checkCollisions(gameState, room, io) {
             }
           }
           
-          // Create explosion effect
-          gameState.explosions = gameState.explosions || [];
-          gameState.explosions.push({
-            id: `explosion-${Date.now()}`,
-            position: {...enemy.position},
-            timeLeft: 500
-          });
+          // Create explosion effect only for on-screen positions
+          if (enemy.position.x >= -50 && enemy.position.x <= 850 && 
+              enemy.position.y >= -50 && enemy.position.y <= 650) {
+            gameState.explosions = gameState.explosions || [];
+            gameState.explosions.push({
+              id: `explosion-${Date.now()}`,
+              position: {...enemy.position},
+              timeLeft: 500
+            });
+          }
           
           // Remove enemy
           gameState.enemies = gameState.enemies.filter(e => e.id !== enemy.id);
