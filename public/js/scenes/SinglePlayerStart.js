@@ -3,13 +3,9 @@ class SinglePlayerStart extends Phaser.Scene {
     constructor() {
         super('SinglePlayerStart');
         this.DEBUG = true; // Set to false in production
-        this.waveManager = new WaveManager(); // Add wave manager
     }
 
     preload() {
-        // Load wave manager script first
-        this.load.script('waveManager', 'waveManager.js');
-        
         this.load.image('background', 'assets/space.png');
         this.load.image('heart', 'assets/heart.png');
         
@@ -76,9 +72,11 @@ class SinglePlayerStart extends Phaser.Scene {
         this.gameOver = false;
 
         // Initialize wave manager
-        if (typeof WaveManager !== 'undefined') {
-            this.waveManager = new WaveManager();
-        }
+        this.waveManager = new WaveManager();
+
+        // Add missing constants for single player
+        this.ENEMY_BULLET_SPEED = 250;
+        this.BULLET_SPEED = 400;
 
         // Create animations for the enemies
         this.createAnimations();
@@ -264,18 +262,21 @@ class SinglePlayerStart extends Phaser.Scene {
         // Skip if game is over
         if (this.gameOver) return;
 
+        // Ensure player exists and is active
+        if (!this.player || !this.player.active) return;
+
         // Handle player input
-                if (this.cursors.left.isDown) {
-                    this.player.setVelocityX(-this.playerSpeed);
-                } else if (this.cursors.right.isDown) {
-                    this.player.setVelocityX(this.playerSpeed);
-                } else {
-                    this.player.setVelocityX(0);
-                }
+        if (this.cursors.left.isDown) {
+            this.player.setVelocityX(-this.playerSpeed);
+        } else if (this.cursors.right.isDown) {
+            this.player.setVelocityX(this.playerSpeed);
+        } else {
+            this.player.setVelocityX(0);
+        }
 
         // Continuous firing when space is held down
         if (this.fireKey.isDown && time > this.lastFired + this.fireRate) {
-                    this.fireBullet();
+            this.fireBullet();
             this.lastFired = time;
         }
 
@@ -288,26 +289,26 @@ class SinglePlayerStart extends Phaser.Scene {
         // Move enemy bullets
         this.enemyBullets.children.entries.forEach(bullet => {
             if (bullet.active) {
-                bullet.y += ENEMY_BULLET_SPEED * (delta / 1000);
+                bullet.y += this.ENEMY_BULLET_SPEED * (delta / 1000);
                 
                 // Remove bullets that go off screen
                 if (bullet.y > 650) {
-                bullet.setActive(false);
-                bullet.setVisible(false);
-            }
+                    bullet.setActive(false);
+                    bullet.setVisible(false);
+                }
             }
         });
 
         // Move player bullets
         this.bullets.children.entries.forEach(bullet => {
             if (bullet.active) {
-                bullet.y -= BULLET_SPEED * (delta / 1000);
+                bullet.y -= this.BULLET_SPEED * (delta / 1000);
                 
                 // Remove bullets that go off screen
                 if (bullet.y < -20) {
-                bullet.setActive(false);
-                bullet.setVisible(false);
-            }
+                    bullet.setActive(false);
+                    bullet.setVisible(false);
+                }
             }
         });
     }
@@ -443,24 +444,31 @@ class SinglePlayerStart extends Phaser.Scene {
     createEnemiesFromData(enemyData) {
         enemyData.forEach(enemyInfo => {
             let enemy;
+            let scale;
             
             switch (enemyInfo.type) {
                 case 'wasp':
                     enemy = this.wasps.create(enemyInfo.position.x, enemyInfo.position.y, 'wasp-sheet');
                     enemy.anims.play('wasp-anim');
+                    scale = 1.5; // Original wasp size
                     break;
                 case 'jellyfish-large':
                     enemy = this.jellyfishLarge.create(enemyInfo.position.x, enemyInfo.position.y, 'jellyfish-large1');
                     enemy.anims.play('jellyfish-large-frames');
+                    scale = 2.0; // Original large jellyfish size
                     break;
                 case 'jellyfish-medium':
                     enemy = this.jellyfishMedium.create(enemyInfo.position.x, enemyInfo.position.y, 'jellyfish-medium1');
                     enemy.anims.play('jellyfish-medium-frames');
+                    scale = 1.7; // Original medium jellyfish size
                     break;
                 case 'jellyfish-tiny':
                     enemy = this.jellyfishTiny.create(enemyInfo.position.x, enemyInfo.position.y, 'jellyfish-tiny1');
                     enemy.anims.play('jellyfish-tiny-frames');
+                    scale = 1.4; // Original tiny jellyfish size
                     break;
+                default:
+                    scale = 1.0;
             }
             
             if (enemy) {
@@ -471,9 +479,9 @@ class SinglePlayerStart extends Phaser.Scene {
                 enemy.originalX = enemyInfo.originalPosition.x;
                 enemy.originalY = enemyInfo.originalPosition.y;
                 enemy.waveNumber = enemyInfo.waveNumber;
-                enemy.setScale(0.25);
+                enemy.setScale(scale); // Use proper scale instead of 0.25
                 this.enemies.add(enemy);
-        }
+            }
         });
     }
 
