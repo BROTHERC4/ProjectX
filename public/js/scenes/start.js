@@ -12,6 +12,16 @@ class Start extends Phaser.Scene {
     this.roomId = data.roomId;
     this.playerId = data.playerId;
     this.isHost = data.isHost;
+    
+    // Get the socket from the global socketClient with safety check
+    if (window.socketClient && window.socketClient.socket) {
+      this.socket = window.socketClient.socket;
+    } else {
+      console.error('[START] Socket client not available');
+      // Return to menu if socket client is not available
+      this.scene.start('MenuScene', { error: 'Connection lost. Please try again.' });
+      return;
+    }
   }
 
   preload() {
