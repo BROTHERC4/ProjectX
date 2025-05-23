@@ -1,6 +1,14 @@
 # ProjectX Multiplayer
 
-A multiplayer space shooter game built with Phaser.js, Socket.io, and Express.js.
+A retro 8-bit space shooter inspired by classic arcade games. Defend Earth from waves of alien invaders in this fast-paced shoot 'em up with both single-player and cooperative multiplayer modes.
+
+## Gameplay
+
+Players control spaceships at the bottom of the screen, shooting upward at descending waves of enemies. Features include:
+- Progressive wave difficulty with 4 enemy types (wasps, jellyfish variants)
+- Destructible barriers for protection
+- Cooperative multiplayer for up to 4 players
+- Infinite wave progression system
 
 ## Features
 

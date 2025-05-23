@@ -1,3 +1,6 @@
+# ProjectX Game Design Document
+*Note: This document outlines the development plan for ProjectX, a game inspired by Decimation X*
+
 To recreate *ProjectX* as a multiplayer browser game with a retro 8-bit aesthetic, I've refined the game design based on the provided YouTube gameplay video ([Decimation X Gameplay](https://www.youtube.com/watch?v=ChlLzWIiINo)), your goal to replicate its look and gameplay, and the previous responses. This response provides a detailed game design and a verbal development plan without code examples, focusing on how to structure the code and connect the server and client using **Phaser**, **Socket.io**, **Express.js**, **Railway**, and **Cursor AI** (assumed to be an AI-assisted coding tool like [Cursor](https://cursor.sh/)). The plan emphasizes multiplayer synchronization and modular code organization for a 2D shoot 'em up (shmup) game.
 
 ### Game Design Specifications

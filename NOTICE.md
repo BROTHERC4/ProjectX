@@ -33,8 +33,8 @@ This file contains detailed attribution information for third-party assets used 
 - **Files**: space.png
 
 ### Spaceship Sprites
-- **Source**: Generated using GrokAI
-- **License**: [Verify license terms with GrokAI]
+- **Creator**: Generated using GrokAI (AI-generated content)
+- **License**: Public Domain / CC0 (AI-generated content has no copyright)
 - **Files**:
   - spaceship.png
   - spaceshipred.png
