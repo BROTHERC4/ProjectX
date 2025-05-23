@@ -306,7 +306,14 @@ class Start extends Phaser.Scene {
       this.updateBullets(gameState.enemyBullets, this.enemyBullets);
       this.updateEnemies(gameState.enemies);
       this.updateBarriers(gameState.barriers);
-      
+
+      // Update scoreboard and lives display
+      this.updateScoreboard(gameState.players);
+      const currentPlayer = gameState.players.find(p => p.id === this.playerId);
+      if (currentPlayer) {
+        this.updateLivesDisplay(currentPlayer.lives);
+      }
+
       // Update wave display
       if (gameState.currentWave && this.waveText) {
         this.waveText.setText(`Wave: ${gameState.currentWave}`);
