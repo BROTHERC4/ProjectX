@@ -1,8 +1,11 @@
 // Game state management for multiplayer
 const { getRoomData, getAllRoomData } = require('./roomManager');
+const WaveManager = require('./waveManager');
 
 // Store game loop intervals for each room
 const gameLoops = {};
+// Store wave managers for each room
+const waveManagers = {};
 
 // Game constants
 const GAME_SPEED = 1000 / 60; // 60 FPS
@@ -84,6 +87,9 @@ function startGameInRoom(roomId, io) {
   const room = getRoomData(roomId);
   if (!room || room.gameInProgress) return;
   
+  // Create a new wave manager for this room
+  waveManagers[roomId] = new WaveManager();
+  
   // Initialize game state
   room.gameInProgress = true;
   room.gameState = {
@@ -97,12 +103,14 @@ function startGameInRoom(roomId, io) {
     })),
     bullets: [],
     enemyBullets: [],
-    enemies: initializeEnemies(),
+    enemies: waveManagers[roomId].generateWave(), // Use wave manager
     barriers: initializeBarriers(),
     lastEnemyShot: Date.now(),
     enemyDirection: 1,
     gameOver: false,
     winner: null,
+    currentWave: waveManagers[roomId].getCurrentWave(),
+    waveTransition: false,
     timestamp: Date.now()
   };
   
@@ -126,6 +134,11 @@ function endGameInRoom(roomId) {
   if (gameLoops[roomId]) {
     clearInterval(gameLoops[roomId]);
     delete gameLoops[roomId];
+  }
+  
+  // Clean up wave manager
+  if (waveManagers[roomId]) {
+    delete waveManagers[roomId];
   }
   
   const room = getRoomData(roomId);
@@ -292,7 +305,7 @@ function updateGameState(roomId, io) {
   checkCollisions(gameState, room, io);
   
   // Check win/lose conditions
-  checkGameEnd(gameState, room);
+  checkGameEnd(gameState, room, roomId, io);
   
   // Update timestamp
   gameState.timestamp = Date.now();
@@ -682,13 +695,42 @@ function checkCollisions(gameState, room, io) {
  * Check if the game should end
  * @param {object} gameState - Current game state
  * @param {object} room - Room object
+ * @param {string} roomId - Room ID for wave manager lookup
+ * @param {object} io - Socket.io instance for broadcasting wave transitions
  */
-function checkGameEnd(gameState, room) {
-  // Check if all enemies are defeated
-  if (gameState.enemies.length === 0) {
-    gameState.gameOver = true;
-    gameState.winner = 'players';
-    return;
+function checkGameEnd(gameState, room, roomId, io) {
+  // Check if all enemies are defeated - start next wave instead of ending
+  if (gameState.enemies.length === 0 && !gameState.waveTransition) {
+    const waveManager = waveManagers[roomId];
+    if (waveManager) {
+      const waveResult = waveManager.checkWaveComplete(gameState.enemies);
+      
+      if (waveResult.waveComplete) {
+        gameState.waveTransition = true;
+        gameState.currentWave = waveResult.waveNumber;
+        
+        // Broadcast wave complete message
+        io.to(roomId).emit('wave_complete', {
+          waveNumber: waveResult.waveNumber - 1,
+          nextWave: waveResult.waveNumber,
+          delay: waveResult.delay
+        });
+        
+        // Add new enemies after delay
+        setTimeout(() => {
+          gameState.enemies = waveResult.newEnemies;
+          gameState.waveTransition = false;
+          
+          // Broadcast new wave started
+          io.to(roomId).emit('wave_started', {
+            waveNumber: waveResult.waveNumber,
+            enemyCount: waveResult.newEnemies.length
+          });
+        }, waveResult.delay);
+        
+        return; // Don't end the game, continue with next wave
+      }
+    }
   }
   
   // Check if all players are out of lives

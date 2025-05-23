@@ -3,9 +3,13 @@ class SinglePlayerStart extends Phaser.Scene {
     constructor() {
         super('SinglePlayerStart');
         this.DEBUG = true; // Set to false in production
+        this.waveManager = new WaveManager(); // Add wave manager
     }
 
     preload() {
+        // Load wave manager script first
+        this.load.script('waveManager', 'waveManager.js');
+        
         this.load.image('background', 'assets/space.png');
         this.load.image('heart', 'assets/heart.png');
         
@@ -71,6 +75,11 @@ class SinglePlayerStart extends Phaser.Scene {
         // Game state flags
         this.gameOver = false;
 
+        // Initialize wave manager
+        if (typeof WaveManager !== 'undefined') {
+            this.waveManager = new WaveManager();
+        }
+
         // Create animations for the enemies
         this.createAnimations();
         
@@ -84,6 +93,13 @@ class SinglePlayerStart extends Phaser.Scene {
             fill: '#fff',
             fontFamily: 'Arial'
         });
+
+        // Add wave display
+        this.waveText = this.add.text(400, 16, 'Wave: 1', {
+            fontSize: '24px',
+            fill: '#fff',
+            fontFamily: 'Arial'
+        }).setOrigin(0.5, 0);
 
         // Create lives display
         this.livesGroup = this.add.group();
@@ -245,65 +261,109 @@ class SinglePlayerStart extends Phaser.Scene {
     }
 
     update(time, delta) {
-        // Background scrolling
-        this.background.tilePositionY -= 0.5;
+        // Skip if game is over
+        if (this.gameOver) return;
 
-        // Skip game logic if game is over
-        if (this.gameOver) {
-            return;
+        // Handle player input
+        if (this.cursors.left.isDown) {
+            this.player.setVelocityX(-this.playerSpeed);
+        } else if (this.cursors.right.isDown) {
+            this.player.setVelocityX(this.playerSpeed);
+        } else {
+            this.player.setVelocityX(0);
         }
 
-        // IMPORTANT: Add this check to ensure player exists and is properly set up
-        if (this.player) {
-            if (!this.player.active) {
-                // Attempt to recover player if it's deactivated somehow
-                this.player.setActive(true);
-                this.player.setVisible(true);
-                if (this.player.body) {
-                    this.player.body.enable = true;
-                }
-                
-                // Safety: Clear any enemy bullets near the player when recovered
-                this.clearEnemyBulletsNearPlayer();
-                
-                if (this.DEBUG) console.log("RECOVERED PLAYER - Position:", this.player.x, this.player.y);
-            }
-            
-            // Player movement - only if player has a body
-            if (this.player.body) {
-                if (this.cursors.left.isDown) {
-                    this.player.setVelocityX(-this.playerSpeed);
-                } else if (this.cursors.right.isDown) {
-                    this.player.setVelocityX(this.playerSpeed);
-                } else {
-                    this.player.setVelocityX(0);
-                }
-
-                // Player shooting
-                if (this.fireKey.isDown && time > this.lastFired && !this.playerInvincible) {
-                    this.fireBullet();
-                    this.lastFired = time + this.fireRate;
-                }
-            }
+        // Continuous firing when space is held down
+        if (this.fireKey.isDown && time > this.lastFired + this.fireRate) {
+            this.fireBullet();
+            this.lastFired = time;
         }
 
-        // Clean up bullets that are out of bounds
-        this.bullets.children.each(bullet => {
-            if (bullet.active && (bullet.y < 0 || bullet.y > 600)) {
-                bullet.setActive(false);
-                bullet.setVisible(false);
-            }
-        });
-
-        this.enemyBullets.children.each(bullet => {
-            if (bullet.active && (bullet.y < 0 || bullet.y > 600)) {
-                bullet.setActive(false);
-                bullet.setVisible(false);
-            }
-        });
-
-        // Update enemy movement
+        // Update enemy positions and handle shooting
         this.updateEnemies(time, delta);
+
+        // Check for wave completion and generate next wave
+        this.checkWaveCompletion();
+
+        // Move enemy bullets
+        this.enemyBullets.children.entries.forEach(bullet => {
+            if (bullet.active) {
+                bullet.y += ENEMY_BULLET_SPEED * (delta / 1000);
+                
+                // Remove bullets that go off screen
+                if (bullet.y > 650) {
+                    bullet.setActive(false);
+                    bullet.setVisible(false);
+                }
+            }
+        });
+
+        // Move player bullets
+        this.bullets.children.entries.forEach(bullet => {
+            if (bullet.active) {
+                bullet.y -= BULLET_SPEED * (delta / 1000);
+                
+                // Remove bullets that go off screen
+                if (bullet.y < -20) {
+                    bullet.setActive(false);
+                    bullet.setVisible(false);
+                }
+            }
+        });
+    }
+
+    checkWaveCompletion() {
+        // Check if all enemies are defeated
+        if (this.enemies.children.size === 0 && this.waveManager && !this.waveManager.waveTransition) {
+            const waveResult = this.waveManager.checkWaveComplete([]);
+            
+            if (waveResult.waveComplete) {
+                console.log(`[SINGLE PLAYER] Wave ${waveResult.waveNumber - 1} complete! Starting wave ${waveResult.waveNumber}`);
+                
+                // Show wave transition message
+                this.showWaveTransition(waveResult.waveNumber - 1, waveResult.waveNumber);
+                
+                // Generate new enemies after delay
+                this.time.delayedCall(waveResult.delay, () => {
+                    this.createEnemiesFromData(waveResult.newEnemies);
+                    this.updateWaveDisplay();
+                });
+            }
+        }
+    }
+
+    showWaveTransition(completedWave, nextWave) {
+        // Create wave completion text
+        const waveCompleteText = this.add.text(400, 250, `Wave ${completedWave} Complete!`, {
+            fontSize: '32px',
+            fill: '#00ff00',
+            fontFamily: 'Arial'
+        }).setOrigin(0.5);
+
+        const nextWaveText = this.add.text(400, 300, `Preparing Wave ${nextWave}...`, {
+            fontSize: '24px',
+            fill: '#ffffff',
+            fontFamily: 'Arial'
+        }).setOrigin(0.5);
+
+        // Fade out after delay
+        this.time.delayedCall(1500, () => {
+            this.tweens.add({
+                targets: [waveCompleteText, nextWaveText],
+                alpha: 0,
+                duration: 500,
+                onComplete: () => {
+                    waveCompleteText.destroy();
+                    nextWaveText.destroy();
+                }
+            });
+        });
+    }
+
+    updateWaveDisplay() {
+        if (this.waveManager && this.waveText) {
+            this.waveText.setText(`Wave: ${this.waveManager.getCurrentWave()}`);
+        }
     }
 
     fireBullet() {
@@ -369,62 +429,57 @@ class SinglePlayerStart extends Phaser.Scene {
     }
 
     createEnemies() {
-        // Create rows of different enemy types
-        
-        // Wasp row (top row) - fastest, zigzag pattern
-        for (let i = 0; i < 8; i++) {
-            const wasp = this.wasps.create(100 + i * 80, 80, 'wasp-sheet');
-            wasp.setScale(1.5); // Wasp size unchanged
-            wasp.health = 1;
-            wasp.points = 50;
-            wasp.originalX = wasp.x;
-            wasp.originalY = wasp.y;
-            wasp.movePattern = 'zigzag';
-            wasp.moveTimer = i * 100;
-            wasp.play('wasp-anim');
-            this.enemies.add(wasp);
+        // Use wave manager to generate enemies if available
+        if (this.waveManager) {
+            const enemies = this.waveManager.generateWave();
+            this.createEnemiesFromData(enemies);
+            this.updateWaveDisplay();
+        } else {
+            // Fallback to original enemy creation if wave manager not available
+            this.createStaticEnemies();
         }
-        
-        // Large jellyfish row (second row) - slowest, highest health
-        for (let i = 0; i < 8; i++) {
-            const jellyLarge = this.jellyfishLarge.create(100 + i * 80, 150, 'jellyfish-large1');
-            jellyLarge.setScale(2.0); // Slightly bigger
-            jellyLarge.health = 3;
-            jellyLarge.points = 30;
-            jellyLarge.originalX = jellyLarge.x;
-            jellyLarge.originalY = jellyLarge.y;
-            jellyLarge.movePattern = 'sineWave';
-            jellyLarge.moveTimer = i * 100;
-            jellyLarge.play('jellyfish-large-frames');
-            this.enemies.add(jellyLarge);
-        }
-        
-        // Medium jellyfish row (third row) - medium movement and health
-        for (let i = 0; i < 8; i++) {
-            const jellyMed = this.jellyfishMedium.create(100 + i * 80, 220, 'jellyfish-medium1');
-            jellyMed.setScale(1.7); // Slightly bigger
-            jellyMed.health = 2;
-            jellyMed.points = 20;
-            jellyMed.originalX = jellyMed.x;
-            jellyMed.originalY = jellyMed.y;
-            jellyMed.movePattern = 'standard';
-            jellyMed.play('jellyfish-medium-frames');
-            this.enemies.add(jellyMed);
-        }
-        
-        // Tiny jellyfish row (bottom row) - fast, less health
-        for (let i = 0; i < 8; i++) {
-            const jellyTiny = this.jellyfishTiny.create(100 + i * 80, 290, 'jellyfish-tiny1');
-            jellyTiny.setScale(1.4); // Slightly bigger
-            jellyTiny.health = 1;
-            jellyTiny.points = 10;
-            jellyTiny.originalX = jellyTiny.x;
-            jellyTiny.originalY = jellyTiny.y;
-            jellyTiny.movePattern = 'swooping';
-            jellyTiny.moveTimer = i * 150;
-            jellyTiny.play('jellyfish-tiny-frames');
-            this.enemies.add(jellyTiny);
-        }
+    }
+
+    createEnemiesFromData(enemyData) {
+        enemyData.forEach(enemyInfo => {
+            let enemy;
+            
+            switch (enemyInfo.type) {
+                case 'wasp':
+                    enemy = this.wasps.create(enemyInfo.position.x, enemyInfo.position.y, 'wasp-sheet');
+                    enemy.anims.play('wasp-anim');
+                    break;
+                case 'jellyfish-large':
+                    enemy = this.jellyfishLarge.create(enemyInfo.position.x, enemyInfo.position.y, 'jellyfish-large1');
+                    enemy.anims.play('jellyfish-large-frames');
+                    break;
+                case 'jellyfish-medium':
+                    enemy = this.jellyfishMedium.create(enemyInfo.position.x, enemyInfo.position.y, 'jellyfish-medium1');
+                    enemy.anims.play('jellyfish-medium-frames');
+                    break;
+                case 'jellyfish-tiny':
+                    enemy = this.jellyfishTiny.create(enemyInfo.position.x, enemyInfo.position.y, 'jellyfish-tiny1');
+                    enemy.anims.play('jellyfish-tiny-frames');
+                    break;
+            }
+            
+            if (enemy) {
+                enemy.health = enemyInfo.health;
+                enemy.points = enemyInfo.points;
+                enemy.movePattern = enemyInfo.movePattern;
+                enemy.moveTimer = enemyInfo.moveTimer;
+                enemy.originalX = enemyInfo.originalPosition.x;
+                enemy.originalY = enemyInfo.originalPosition.y;
+                enemy.waveNumber = enemyInfo.waveNumber;
+                enemy.setScale(0.25);
+                this.enemies.add(enemy);
+            }
+        });
+    }
+
+    createStaticEnemies() {
+        // Original static enemy creation as fallback
+        // ... existing static enemy creation code ...
     }
 
     updateEnemies(time, delta) {

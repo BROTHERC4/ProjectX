@@ -172,6 +172,13 @@ class Start extends Phaser.Scene {
     const scoreboardBg = this.add.rectangle(400, 30, 800, 60, 0x000000, 0.5);
     this.scoreboard.add(scoreboardBg);
     
+    // Add wave display
+    this.waveText = this.add.text(400, 10, 'Wave: 1', {
+      fontFamily: '"Roboto", sans-serif',
+      fontSize: '20px',
+      color: '#ffff00'
+    }).setOrigin(0.5, 0);
+    
     // We'll populate this in updateScoreboard based on players
     this.playerScores = {};
   }
@@ -279,62 +286,84 @@ class Start extends Phaser.Scene {
   }
   
   setupSocketHandlers() {
-    // Handle game state updates from the server
-    window.socketClient.onGameState = (state) => {
-      if (!state) return;
+    // Game state updates
+    this.socket.on('game_state', (gameState) => {
+      if (this.gameOver) return;
       
-      // Update players
-      this.updatePlayers(state.players);
+      // Update all game objects
+      this.updatePlayers(gameState.players);
+      this.updateBullets(gameState.bullets, this.bullets);
+      this.updateBullets(gameState.enemyBullets, this.enemyBullets);
+      this.updateEnemies(gameState.enemies);
+      this.updateBarriers(gameState.barriers);
       
-      // Update bullets
-      this.updateBullets(state.bullets, this.bullets);
-      this.updateBullets(state.enemyBullets, this.enemyBullets);
-      
-      // Update barriers
-      this.updateBarriers(state.barriers);
-      
-      // Update enemies
-      this.updateEnemies(state.enemies);
+      // Update wave display
+      if (gameState.currentWave && this.waveText) {
+        this.waveText.setText(`Wave: ${gameState.currentWave}`);
+      }
       
       // Handle hit effects
-      if (state.hitEffects) {
-        this.handleHitEffects(state.hitEffects);
+      if (gameState.hitEffects) {
+        this.handleHitEffects(gameState.hitEffects);
       }
       
       // Handle explosions
-      if (state.explosions) {
-        this.handleExplosions(state.explosions);
+      if (gameState.explosions) {
+        this.handleExplosions(gameState.explosions);
       }
-      
-      // Update scores and lives
-      this.updateScoreboard(state.players);
-      
-      // Update current player's lives
-      const currentPlayer = state.players.find(p => p.id === this.playerId);
-      if (currentPlayer) {
-        this.updateLivesDisplay(currentPlayer.lives);
-        this.playerInvincible = currentPlayer.invincible;
-      }
-      
-      // Check for game over
-      if (state.gameOver && !this.gameOver) {
-        this.handleGameOver(state);
-      }
-    };
+    });
     
-    // Handle game ending events
-    window.socketClient.onGameEnded = (data) => {
+    // Wave transition events
+    this.socket.on('wave_complete', (data) => {
+      this.showWaveTransition(data.waveNumber, data.nextWave);
+    });
+
+    this.socket.on('wave_started', (data) => {
+      console.log(`[CLIENT] Wave ${data.waveNumber} started with ${data.enemyCount} enemies`);
+    });
+
+    // Game over event
+    this.socket.on('game_over', (data) => {
+      this.handleGameOver(data);
+    });
+
+    // Handle final results
+    this.socket.on('final_results', (data) => {
       this.showFinalResults(data);
-    };
-    
-    // Handle player leaving
-    window.socketClient.onPlayerLeft = (data) => {
-      // Remove the player's ship if they left
-      const playerShip = this.players.getChildren().find(p => p.playerId === data.playerId);
-      if (playerShip) {
-        playerShip.destroy();
-      }
-    };
+    });
+
+    // Handle player disconnections
+    this.socket.on('player_left', (data) => {
+      console.log(`Player ${data.playerId} left the game`);
+    });
+  }
+  
+  showWaveTransition(completedWave, nextWave) {
+    // Create wave completion text
+    const waveCompleteText = this.add.text(400, 250, `Wave ${completedWave} Complete!`, {
+      fontFamily: '"Roboto", sans-serif',
+      fontSize: '32px',
+      color: '#00ff00'
+    }).setOrigin(0.5);
+
+    const nextWaveText = this.add.text(400, 300, `Preparing Wave ${nextWave}...`, {
+      fontFamily: '"Roboto", sans-serif',
+      fontSize: '24px',
+      color: '#ffffff'
+    }).setOrigin(0.5);
+
+    // Fade out after delay
+    this.time.delayedCall(1500, () => {
+      this.tweens.add({
+        targets: [waveCompleteText, nextWaveText],
+        alpha: 0,
+        duration: 500,
+        onComplete: () => {
+          waveCompleteText.destroy();
+          nextWaveText.destroy();
+        }
+      });
+    });
   }
   
   updatePlayers(serverPlayers) {
