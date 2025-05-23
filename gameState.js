@@ -311,6 +311,10 @@ function updateGameState(roomId, io) {
   gameState.timestamp = Date.now();
   
   // Send updated state to all clients in the room
+  if (gameState.explosions && gameState.explosions.length > 0) {
+    console.log(`[SERVER GAME STATE DEBUG] Sending ${gameState.explosions.length} explosions to clients in room ${roomId}:`, 
+      gameState.explosions.map(exp => ({id: exp.id, position: exp.position, type: exp.type})));
+  }
   io.to(roomId).emit('game_state', gameState);
   
   // If game is over, set timeout to end the game after 5 seconds
@@ -570,6 +574,7 @@ function checkCollisions(gameState, room, io) {
         if (barrier.durability <= 0) {
           gameState.barriers = gameState.barriers.filter(b => b.id !== barrier.id);
           // Create barrier destruction effect
+          console.log(`[SERVER BARRIER DEBUG] Creating barrier explosion at (${barrier.position.x}, ${barrier.position.y}), barrier ID: ${barrier.id}`);
           gameState.explosions = gameState.explosions || [];
           gameState.explosions.push({
             id: `explosion-${Date.now()}`,
@@ -577,6 +582,7 @@ function checkCollisions(gameState, room, io) {
             type: 'barrier',
             timeLeft: 500
           });
+          console.log(`[SERVER BARRIER DEBUG] Barrier explosion added to gameState, total explosions: ${gameState.explosions.length}`);
         }
       }
     });
@@ -603,6 +609,7 @@ function checkCollisions(gameState, room, io) {
         if (barrier.durability <= 0) {
           gameState.barriers = gameState.barriers.filter(b => b.id !== barrier.id);
           // Create barrier destruction effect
+          console.log(`[SERVER BARRIER DEBUG] Creating barrier explosion at (${barrier.position.x}, ${barrier.position.y}), barrier ID: ${barrier.id}`);
           gameState.explosions = gameState.explosions || [];
           gameState.explosions.push({
             id: `explosion-${Date.now()}`,
@@ -610,6 +617,7 @@ function checkCollisions(gameState, room, io) {
             type: 'barrier',
             timeLeft: 500
           });
+          console.log(`[SERVER BARRIER DEBUG] Barrier explosion added to gameState, total explosions: ${gameState.explosions.length}`);
         }
       }
     });
@@ -662,12 +670,16 @@ function checkCollisions(gameState, room, io) {
           // Create explosion effect only for on-screen positions
           if (enemy.position.x >= -50 && enemy.position.x <= 850 && 
               enemy.position.y >= -50 && enemy.position.y <= 650) {
+            console.log(`[SERVER EXPLOSION DEBUG] Creating explosion for enemy at (${enemy.position.x}, ${enemy.position.y}), enemy type: ${enemy.type}, enemy ID: ${enemy.id}`);
             gameState.explosions = gameState.explosions || [];
             gameState.explosions.push({
               id: `explosion-${Date.now()}`,
               position: {...enemy.position},
               timeLeft: 500
             });
+            console.log(`[SERVER EXPLOSION DEBUG] Explosion added to gameState, total explosions: ${gameState.explosions.length}`);
+          } else {
+            console.log(`[SERVER EXPLOSION DEBUG] Blocking off-screen explosion for enemy at (${enemy.position.x}, ${enemy.position.y})`);
           }
           
           // Remove enemy
