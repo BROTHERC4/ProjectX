@@ -10,9 +10,9 @@ const waveManagers = {};
 // Game constants
 const GAME_SPEED = 1000 / 60; // 60 FPS
 const PLAYER_SPEED = 200; // Slower for multiplayer
-const BULLET_SPEED = 400;
+const BULLET_SPEED = 600;
 const ENEMY_SPEED = 35;
-const ENEMY_BULLET_SPEED = 250;
+const ENEMY_BULLET_SPEED = 375;
 const SCREEN_WIDTH = 800;
 const SCREEN_HEIGHT = 600;
 
