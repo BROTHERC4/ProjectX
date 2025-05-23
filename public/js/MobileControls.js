@@ -44,7 +44,26 @@ class MobileControls {
     }
   }
   
-    setupControlButtons() {    const SCREEN_WIDTH = 800;    const SCREEN_HEIGHT = 600;    const BUTTON_SIZE = 80;    const BUTTON_Y = SCREEN_HEIGHT - 60; // Move lower to bottom edge        // Create left button (bottom left corner)    this.leftButton = this.scene.add.image(80, BUTTON_Y, 'pointer')      .setDisplaySize(BUTTON_SIZE, BUTTON_SIZE)      .setInteractive()      .setAlpha(0.7)      .setDepth(2000) // High depth to be on top      .setFlipX(true); // Flip for left direction        // Create right button (bottom right corner)    this.rightButton = this.scene.add.image(SCREEN_WIDTH - 80, BUTTON_Y, 'pointer')      .setDisplaySize(BUTTON_SIZE, BUTTON_SIZE)      .setInteractive()      .setAlpha(0.7)      .setDepth(2000);
+  setupControlButtons() {
+    const SCREEN_WIDTH = 800;
+    const SCREEN_HEIGHT = 600;
+    const BUTTON_SIZE = 80;
+    const BUTTON_Y = SCREEN_HEIGHT - 60; // Move lower to bottom edge
+    
+    // Create left button (bottom left corner)
+    this.leftButton = this.scene.add.image(80, BUTTON_Y, 'pointer')
+      .setDisplaySize(BUTTON_SIZE, BUTTON_SIZE)
+      .setInteractive()
+      .setAlpha(0.7)
+      .setDepth(2000) // High depth to be on top
+      .setFlipX(true); // Flip for left direction
+    
+    // Create right button (bottom right corner)
+    this.rightButton = this.scene.add.image(SCREEN_WIDTH - 80, BUTTON_Y, 'pointer')
+      .setDisplaySize(BUTTON_SIZE, BUTTON_SIZE)
+      .setInteractive()
+      .setAlpha(0.7)
+      .setDepth(2000);
     
     // Create invisible fire zone (entire screen except buttons)
     this.fireZone = this.scene.add.zone(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -89,7 +108,25 @@ class MobileControls {
       this.rightButton.clearTint();
     });
     
-        // Set up fire zone (tap anywhere else to shoot)    this.fireZone.on('pointerdown', (pointer) => {      // Check if tap is not on control buttons      const buttonRadius = 50; // Area around buttons to ignore            // Check left button area (bottom left)      const leftButtonDist = Math.abs(pointer.x - 80) + Math.abs(pointer.y - BUTTON_Y);      // Check right button area (bottom right)       const rightButtonDist = Math.abs(pointer.x - (SCREEN_WIDTH - 80)) + Math.abs(pointer.y - BUTTON_Y);            if (leftButtonDist < buttonRadius || rightButtonDist < buttonRadius) {        // Tap is on or near control buttons, ignore        return;      }            this.firePressed = true;      // Create a brief visual effect at tap location      this.createFireEffect(pointer.x, pointer.y);    });
+    // Set up fire zone (tap anywhere else to shoot)
+    this.fireZone.on('pointerdown', (pointer) => {
+      // Check if tap is not on control buttons
+      const buttonRadius = 50; // Area around buttons to ignore
+      
+      // Check left button area (bottom left)
+      const leftButtonDist = Math.abs(pointer.x - 80) + Math.abs(pointer.y - BUTTON_Y);
+      // Check right button area (bottom right) 
+      const rightButtonDist = Math.abs(pointer.x - (SCREEN_WIDTH - 80)) + Math.abs(pointer.y - BUTTON_Y);
+      
+      if (leftButtonDist < buttonRadius || rightButtonDist < buttonRadius) {
+        // Tap is on or near control buttons, ignore
+        return;
+      }
+      
+      this.firePressed = true;
+      // Create a brief visual effect at tap location
+      this.createFireEffect(pointer.x, pointer.y);
+    });
     
     this.fireZone.on('pointerup', () => {
       this.firePressed = false;
