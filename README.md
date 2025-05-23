@@ -134,12 +134,13 @@ MIT
 ## Credits
 
 ### Assets
-- Wasp sprite by [Spring Spring](https://opengameart.org/content/wasp-0) (CC0 1.0)
-- Jellyfish sprites by [rapidpunches](https://opengameart.org/content/primary-jellies) (CC BY-SA 4.0)
-- Space background from Phaser setup
-- Spaceship sprites generated using GrokAI
+- **Wasp sprite**: [Spring Spring](https://opengameart.org/content/wasp-0) (CC0 1.0)
+- **Jellyfish sprites**: [rapidpunches](https://opengameart.org/content/primary-jellies) (CC BY 3.0)
+- **Space backgrounds**: [Screaming Brain Studios](https://screamingbrainstudios.itch.io/seamless-space-backgrounds) (CC0 1.0)
+- **Heart/lives icon**: [NicoleMarieProductions](https://opengameart.org/content/heart-1616) (CC BY 3.0)
+- **Spaceship sprites**: Generated using GrokAI (CC0 1.0)
 
 ### Technologies
-- Built with [Phaser.js](https://phaser.io/)
-- Multiplayer functionality with [Socket.io](https://socket.io/)
-- Server powered by [Express.js](https://expressjs.com/)
+- Built with [Phaser.js](https://phaser.io/) (MIT License)
+- Multiplayer functionality with [Socket.io](https://socket.io/) (MIT License)
+- Server powered by [Express.js](https://expressjs.com/) (MIT License)

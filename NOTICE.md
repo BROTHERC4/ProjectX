@@ -13,7 +13,9 @@ This file contains detailed attribution information for third-party assets used 
 ### Jellyfish Sprites
 - **Creator**: rapidpunches
 - **Source**: https://opengameart.org/content/primary-jellies
-- **License**: CC BY-SA 4.0
+- **License**: CC BY-SA 4.0 OR CC BY 3.0 (dual licensed - either may be used)
+- **License Used**: CC BY 3.0 (chosen for compatibility)
+- **Attribution**: "RAPIDPUNCHES" (as specified by creator)
 - **Files**: 
   - jellyfish-large-Sheet.png
   - jellyfish-large1.png
@@ -26,34 +28,57 @@ This file contains detailed attribution information for third-party assets used 
   - jellyfish-tiny-Sheet.png
   - jellyfish-tiny1.png
   - jellyfish-tiny2.png
-  
-### Space Background
-- **Source**: Phaser setup
-- **License**: MIT (assumed, verify with Phaser documentation)
-- **Files**: space.png
+
+### Space Backgrounds
+- **Creator**: Screaming Brain Studios
+- **Source**: https://screamingbrainstudios.itch.io/seamless-space-backgrounds
+- **License**: CC0 1.0 (Public Domain)
+- **Files**: Multiple space background variants (seamless space backgrounds collection)
+- **Notes**: Replaces original Phaser example asset with properly licensed CC0 alternatives
+
+### Heart/Lives Icon
+- **Creator**: Nicole Marie T (NicoleMarieProductions)
+- **Source**: https://opengameart.org/content/heart-1616
+- **License**: CC BY 3.0
+- **Files**: heart.png
+- **Attribution**: "NicoleMarieProductions" (as requested by creator)
 
 ### Spaceship Sprites
 - **Creator**: Generated using GrokAI (AI-generated content)
-- **License**: Public Domain / CC0 (AI-generated content has no copyright)
+- **License**: CC0 1.0 (Public Domain) - AI-generated content has no copyright
 - **Files**:
   - spaceship.png
   - spaceshipred.png
 
+## Compliance Notes
+
+### CC BY 3.0 Compliance (Jellyfish Sprites)
+- ✅ Attribution provided above  
+- ✅ License compatibility confirmed (CC BY 3.0 compatible with GPL v3)
+- ✅ Source link provided
+- ✅ Creator credit: "RAPIDPUNCHES"
+- ✅ Dual license option chosen (CC BY 3.0 selected over CC BY-SA 4.0 for simplicity)
+
+### CC BY 3.0 Compliance (Heart Icon)
+- ✅ Attribution provided above
+- ✅ License compatibility confirmed (CC BY 3.0 compatible with GPL v3)
+- ✅ Source link provided
+- ✅ Creator credit: "NicoleMarieProductions"
+
+### GPL v3 Compatibility
+All assets are compatible with GNU GPL v3:
+- CC0 assets can be included in GPL projects
+- CC BY 3.0 is compatible with GPL v3 (attribution provided for both jellyfish and heart)
+- All assets properly attributed as required
+
 ## License Summaries
 
 ### CC0 1.0 (Creative Commons Zero)
-This is a public domain dedication, which means the creator has waived all copyright and related rights to the work. You can copy, modify, distribute, and perform the work, even for commercial purposes, without asking permission.
+This is a public domain dedication. You can copy, modify, distribute, and perform the work, even for commercial purposes, without asking permission.
 
-### CC BY-SA 4.0 (Creative Commons Attribution-ShareAlike)
-You are free to:
-- Share — copy and redistribute the material in any medium or format
-- Adapt — remix, transform, and build upon the material for any purpose, even commercially
+### CC BY 3.0 (Creative Commons Attribution)
+You are free to share and adapt the material under these terms:
+- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
 
-Under the following terms:
-- Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
-- ShareAlike — If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
-
-### MIT License
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. 
+### GNU GPL v3
+This project's main license. All code and the overall work are licensed under GPL v3, ensuring the entire project remains free and open source. 
