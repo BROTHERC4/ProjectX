@@ -428,39 +428,74 @@ function updateEnemies(gameState, deltaTime) {
     gameState.enemyDirection *= -1;
     gameState.enemies.forEach(enemy => {
       enemy.position.y += 5;
+      // Update target position if enemy reached formation
+      if (enemy.formationReached) {
+        enemy.originalPosition.y += 5;
+        if (enemy.targetPosition) {
+          enemy.targetPosition.y += 5;
+        }
+      }
     });
   }
   
-  // Move enemies based on their pattern
+  // Move enemies based on their state
   gameState.enemies.forEach(enemy => {
-    // Base horizontal movement
-    enemy.position.x += ENEMY_SPEED * (deltaTime / 1000) * gameState.enemyDirection;
-    
-    // Add unique movement patterns matching singleplayer
-    switch(enemy.movePattern) {
-      case 'zigzag':
-        enemy.moveTimer += deltaTime;
-        enemy.position.y = enemy.originalPosition.y + Math.sin(enemy.moveTimer / 300) * 15;
-        break;
-      case 'sineWave':
-        enemy.moveTimer += deltaTime;
-        // Add slight wave motion to large jellyfish
-        enemy.position.x += Math.sin(enemy.moveTimer / 1000) * 0.5;
-        enemy.position.y += 0.002 * deltaTime; // Slow descent
-        break;
-      case 'standard':
-        // Medium jellyfish - standard movement
-        enemy.position.y += 0.002 * deltaTime; // Slow descent
-        break;
-      case 'swooping':
-        enemy.moveTimer += deltaTime;
-        // Add swooping motion to tiny jellyfish
-        if (enemy.moveTimer % 5000 < 2500) {
-          enemy.position.y += 0.005 * deltaTime; // Faster descent during swoop
-        } else {
-          enemy.position.y += 0.001 * deltaTime; // Slower descent after swoop
-        }
-        break;
+    // Handle formation movement first (move to target position)
+    if (!enemy.formationReached && enemy.targetPosition) {
+      const distToTargetX = Math.abs(enemy.position.x - enemy.targetPosition.x);
+      const distToTargetY = Math.abs(enemy.position.y - enemy.targetPosition.y);
+      
+      // Move towards target position
+      const formationSpeed = 80; // Pixels per second
+      
+      if (distToTargetX > 2) {
+        const dirX = enemy.targetPosition.x > enemy.position.x ? 1 : -1;
+        enemy.position.x += dirX * formationSpeed * (deltaTime / 1000);
+      }
+      
+      if (distToTargetY > 2) {
+        const dirY = enemy.targetPosition.y > enemy.position.y ? 1 : -1;
+        enemy.position.y += dirY * formationSpeed * (deltaTime / 1000);
+      }
+      
+      // Check if reached formation position
+      if (distToTargetX <= 2 && distToTargetY <= 2) {
+        enemy.formationReached = true;
+        enemy.originalPosition.x = enemy.targetPosition.x;
+        enemy.originalPosition.y = enemy.targetPosition.y;
+        enemy.position.x = enemy.targetPosition.x;
+        enemy.position.y = enemy.targetPosition.y;
+      }
+    } else {
+      // Normal enemy movement patterns once in formation
+      enemy.position.x += ENEMY_SPEED * (deltaTime / 1000) * gameState.enemyDirection;
+      
+      // Add unique movement patterns matching singleplayer
+      switch(enemy.movePattern) {
+        case 'zigzag':
+          enemy.moveTimer += deltaTime;
+          enemy.position.y = enemy.originalPosition.y + Math.sin(enemy.moveTimer / 300) * 15;
+          break;
+        case 'sineWave':
+          enemy.moveTimer += deltaTime;
+          // Add slight wave motion to large jellyfish
+          enemy.position.x += Math.sin(enemy.moveTimer / 1000) * 0.5;
+          enemy.position.y += 0.002 * deltaTime; // Slow descent
+          break;
+        case 'standard':
+          // Medium jellyfish - standard movement
+          enemy.position.y += 0.002 * deltaTime; // Slow descent
+          break;
+        case 'swooping':
+          enemy.moveTimer += deltaTime;
+          // Add swooping motion to tiny jellyfish
+          if (enemy.moveTimer % 5000 < 2500) {
+            enemy.position.y += 0.005 * deltaTime; // Faster descent during swoop
+          } else {
+            enemy.position.y += 0.001 * deltaTime; // Slower descent after swoop
+          }
+          break;
+      }
     }
   });
 }
@@ -475,8 +510,10 @@ function handleEnemyShooting(gameState) {
   // Only allow enemy shots every 500ms
   if (now - gameState.lastEnemyShot < 500) return;
   
-  // Find enemies that can shoot (only wasps)
-  const shootingEnemies = gameState.enemies.filter(enemy => enemy.type === 'wasp');
+  // Find enemies that can shoot (only wasps that have reached formation)
+  const shootingEnemies = gameState.enemies.filter(enemy => 
+    enemy.type === 'wasp' && enemy.formationReached
+  );
   
   // Randomly select an enemy to shoot (if any)
   if (shootingEnemies.length > 0 && Math.random() < 0.1) {

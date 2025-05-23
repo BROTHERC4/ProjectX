@@ -499,6 +499,13 @@ class SinglePlayerStart extends Phaser.Scene {
                 enemy.originalY = enemyInfo.originalPosition.y;
                 enemy.waveNumber = enemyInfo.waveNumber;
                 enemy.setScale(scale); // Use proper scale instead of 0.25
+                
+                // Add new formation movement properties
+                enemy.targetX = enemyInfo.targetPosition ? enemyInfo.targetPosition.x : enemyInfo.originalPosition.x;
+                enemy.targetY = enemyInfo.targetPosition ? enemyInfo.targetPosition.y : enemyInfo.originalPosition.y;
+                enemy.formationReached = enemyInfo.formationReached || false;
+                enemy.formationSpeed = 80; // Pixels per second to move into formation
+                
                 this.enemies.add(enemy);
             }
         });
@@ -512,8 +519,11 @@ class SinglePlayerStart extends Phaser.Scene {
     updateEnemies(time, delta) {
         // Skip if game is over
         if (this.gameOver) return;
+        
         let moveDown = false;
         let moveSpeed = this.enemySpeed * delta / 1000;
+        
+        // Check if enemies should move down due to edge collision
         this.enemies.children.entries.forEach(enemy => {
             if (!enemy.active) return;
             if ((enemy.x < 50 && this.enemyDirection < 0) || 
@@ -521,34 +531,70 @@ class SinglePlayerStart extends Phaser.Scene {
                 moveDown = true;
             }
         });
+        
         if (moveDown) {
             this.enemyDirection *= -1;
             this.enemies.children.entries.forEach(enemy => {
                 if (!enemy.active) return;
                 enemy.y += 5;
+                // Update target position if enemy reached formation
+                if (enemy.formationReached) {
+                    enemy.originalY += 5;
+                    enemy.targetY += 5;
+                }
             });
         }
+        
         this.enemies.children.entries.forEach(enemy => {
             if (!enemy.active) return;
-            enemy.x += moveSpeed * this.enemyDirection;
-            switch(enemy.movePattern) {
-                case 'zigzag':
-                    enemy.moveTimer += delta;
-                    enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 300) * 15;
-                    // Only wasps (zigzag) can shoot
-                    if (!enemy.lastShotTime || time - enemy.lastShotTime > 1800) { // Reduced shooting frequency
-                        if (Phaser.Math.Between(0, 9500) < 5 * delta) { // Reduced chance to shoot
-                            this.enemyShoot(enemy);
-                            enemy.lastShotTime = time;
+            
+            // Handle formation movement first (move to target position)
+            if (!enemy.formationReached) {
+                const distToTargetX = Math.abs(enemy.x - enemy.targetX);
+                const distToTargetY = Math.abs(enemy.y - enemy.targetY);
+                
+                // Move towards target position
+                if (distToTargetX > 2) {
+                    const dirX = enemy.targetX > enemy.x ? 1 : -1;
+                    enemy.x += dirX * enemy.formationSpeed * delta / 1000;
+                }
+                
+                if (distToTargetY > 2) {
+                    const dirY = enemy.targetY > enemy.y ? 1 : -1;
+                    enemy.y += dirY * enemy.formationSpeed * delta / 1000;
+                }
+                
+                // Check if reached formation position
+                if (distToTargetX <= 2 && distToTargetY <= 2) {
+                    enemy.formationReached = true;
+                    enemy.originalX = enemy.targetX;
+                    enemy.originalY = enemy.targetY;
+                    enemy.x = enemy.targetX;
+                    enemy.y = enemy.targetY;
+                }
+            } else {
+                // Normal enemy movement patterns once in formation
+                enemy.x += moveSpeed * this.enemyDirection;
+                
+                switch(enemy.movePattern) {
+                    case 'zigzag':
+                        enemy.moveTimer += delta;
+                        enemy.y = enemy.originalY + Math.sin(enemy.moveTimer / 300) * 15;
+                        // Only wasps (zigzag) can shoot, and only when in formation
+                        if (!enemy.lastShotTime || time - enemy.lastShotTime > 1800) {
+                            if (Phaser.Math.Between(0, 9500) < 5 * delta) {
+                                this.enemyShoot(enemy);
+                                enemy.lastShotTime = time;
+                            }
                         }
-                    }
-                    break;
-                case 'sineWave':
-                case 'swooping':
-                case 'standard':
-                    // All non-wasp enemies now have the same very slow descent
-                    enemy.y += 0.002 * (delta); // Very slow constant descent (half speed)
-                    break;
+                        break;
+                    case 'sineWave':
+                    case 'swooping':
+                    case 'standard':
+                        // All non-wasp enemies have very slow descent once in formation
+                        enemy.y += 0.002 * (delta);
+                        break;
+                }
             }
         });
     }

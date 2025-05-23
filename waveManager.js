@@ -81,14 +81,16 @@ class WaveManager {
       enemies.push({
         id: `${enemyType.type}-${this.currentWave}-${i}`,
         type: enemyType.type,
-        position: position,
-        originalPosition: {...position},
+        position: { x: position.x, y: position.y - 100 }, // Spawn 100px higher than formation
+        originalPosition: {...position}, // Target formation position
+        targetPosition: {...position}, // Target formation position for new spawn system
         health: this.getEnemyHealthForWave(enemyType.health),
         points: this.getEnemyPointsForWave(enemyType.points),
         movePattern: enemyType.movePattern,
         moveTimer: i * 50, // Stagger movement slightly
         lastShot: 0,
-        waveNumber: this.currentWave
+        waveNumber: this.currentWave,
+        formationReached: false // Track if enemy reached formation position
       });
     }
     
@@ -104,67 +106,75 @@ class WaveManager {
     
     console.log(`[WAVE] Generating classic Wave 1 layout`);
     
-    // Wasp row (top row) - 8 wasps at y=80
+    // Wasp row (top row) - 8 wasps spawn at y=20, move to y=80
     for (let i = 0; i < 8; i++) {
       enemies.push({
         id: `wasp-1-${i}`,
         type: 'wasp',
-        position: { x: 100 + i * 80, y: 80 },
-        originalPosition: { x: 100 + i * 80, y: 80 },
+        position: { x: 100 + i * 80, y: 20 }, // Spawn higher
+        originalPosition: { x: 100 + i * 80, y: 80 }, // Target position
+        targetPosition: { x: 100 + i * 80, y: 80 }, // Target formation position
         health: 1,
         points: 50,
         movePattern: 'zigzag',
         moveTimer: i * 100,
         lastShot: 0,
-        waveNumber: 1
+        waveNumber: 1,
+        formationReached: false // Track if enemy reached formation position
       });
     }
     
-    // Large jellyfish row (second row) - 8 large jellyfish at y=150
+    // Large jellyfish row (second row) - 8 large jellyfish spawn at y=-10, move to y=150
     for (let i = 0; i < 8; i++) {
       enemies.push({
         id: `jellyfish-large-1-${i}`,
         type: 'jellyfish-large',
-        position: { x: 100 + i * 80, y: 150 },
-        originalPosition: { x: 100 + i * 80, y: 150 },
+        position: { x: 100 + i * 80, y: -10 }, // Spawn higher
+        originalPosition: { x: 100 + i * 80, y: 150 }, // Target position
+        targetPosition: { x: 100 + i * 80, y: 150 }, // Target formation position
         health: 3,
         points: 30,
         movePattern: 'sineWave',
         moveTimer: i * 100,
         lastShot: 0,
-        waveNumber: 1
+        waveNumber: 1,
+        formationReached: false
       });
     }
     
-    // Medium jellyfish row (third row) - 8 medium jellyfish at y=220
+    // Medium jellyfish row (third row) - 8 medium jellyfish spawn at y=-40, move to y=220
     for (let i = 0; i < 8; i++) {
       enemies.push({
         id: `jellyfish-medium-1-${i}`,
         type: 'jellyfish-medium',
-        position: { x: 100 + i * 80, y: 220 },
-        originalPosition: { x: 100 + i * 80, y: 220 },
+        position: { x: 100 + i * 80, y: -40 }, // Spawn higher
+        originalPosition: { x: 100 + i * 80, y: 220 }, // Target position
+        targetPosition: { x: 100 + i * 80, y: 220 }, // Target formation position
         health: 2,
         points: 20,
         movePattern: 'standard',
         moveTimer: 0,
         lastShot: 0,
-        waveNumber: 1
+        waveNumber: 1,
+        formationReached: false
       });
     }
     
-    // Tiny jellyfish row (bottom row) - 8 tiny jellyfish at y=290
+    // Tiny jellyfish row (bottom row) - 8 tiny jellyfish spawn at y=-70, move to y=290
     for (let i = 0; i < 8; i++) {
       enemies.push({
         id: `jellyfish-tiny-1-${i}`,
         type: 'jellyfish-tiny',
-        position: { x: 100 + i * 80, y: 290 },
-        originalPosition: { x: 100 + i * 80, y: 290 },
+        position: { x: 100 + i * 80, y: -70 }, // Spawn higher
+        originalPosition: { x: 100 + i * 80, y: 290 }, // Target position
+        targetPosition: { x: 100 + i * 80, y: 290 }, // Target formation position
         health: 1,
         points: 10,
         movePattern: 'swooping',
         moveTimer: i * 150,
         lastShot: 0,
-        waveNumber: 1
+        waveNumber: 1,
+        formationReached: false
       });
     }
     
@@ -291,9 +301,9 @@ class WaveManager {
   generateFormationPositions(formation, count) {
     const positions = [];
     const startX = 50;
-    const startY = 80;
+    const startY = 50; // Moved higher from 80 to 50
     const spacingX = 80;
-    const spacingY = 70;
+    const spacingY = 60; // Reduced spacing from 70 to 60 for tighter formations
     
     switch (formation) {
       case 'grid':
@@ -373,7 +383,7 @@ class WaveManager {
     for (let i = 0; i < count; i++) {
       positions.push({
         x: 100 + Math.random() * 600,
-        y: 80 + Math.random() * 200
+        y: 50 + Math.random() * 150
       });
     }
     
