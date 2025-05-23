@@ -764,6 +764,10 @@ class SinglePlayerStart extends Phaser.Scene {
 
     handleGameOver() {
         if (this.DEBUG) console.log("GAME OVER");
+        
+        // Clean up any remaining particles
+        this.cleanupAllParticles();
+        
         // Set game over flag
         this.gameOver = true;
         // Show game over UI
@@ -802,16 +806,18 @@ class SinglePlayerStart extends Phaser.Scene {
             angle: { min: 0, max: 360 },
             scale: { start: 1, end: 0 },
             blendMode: 'ADD',
-            lifespan: 500,
+            lifespan: 400, // Reduced from 500 to prevent accumulation
             gravityY: 300,
-            quantity: 15,
+            quantity: 10, // Reduced from 15
             emitting: false // Don't continuously emit
         });
         // Emit all particles at once for explosion effect
-        emitter.explode(15);
-        // Clean up after animation completes
-        this.time.delayedCall(1000, () => {
-            emitter.destroy();
+        emitter.explode(10);
+        // Clean up more aggressively
+        this.time.delayedCall(500, () => { // Reduced from 1000
+            if (emitter && emitter.active) {
+                emitter.destroy();
+            }
         });
     }
 
@@ -830,6 +836,19 @@ class SinglePlayerStart extends Phaser.Scene {
                     bullet.setVisible(false);
                     bullet.destroy();
                     if (this.DEBUG) console.log("Cleared enemy bullet near player");
+                }
+            }
+        });
+    }
+
+    cleanupAllParticles() {
+        // Find and destroy all particle emitters in the scene
+        this.children.list.forEach(child => {
+            if (child.type === 'ParticleEmitter' || child instanceof Phaser.GameObjects.Particles.ParticleEmitter) {
+                try {
+                    child.destroy();
+                } catch (error) {
+                    // Ignore cleanup errors
                 }
             }
         });

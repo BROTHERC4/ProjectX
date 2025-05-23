@@ -623,8 +623,8 @@ class Start extends Phaser.Scene {
     // Remove enemies that no longer exist
     existingEnemies.forEach(enemy => {
       if (!serverEnemies.some(e => e.id === enemy.enemyId)) {
-        // Create explosion effect when enemy is destroyed
-        this.createExplosion(enemy.x, enemy.y);
+        // Don't create explosion here - server handles explosions via handleExplosions()
+        // this.createExplosion(enemy.x, enemy.y);
         enemy.destroy();
       }
     });
@@ -663,6 +663,9 @@ class Start extends Phaser.Scene {
   
   handleGameOver(state) {
     this.gameOver = true;
+    
+    // Clean up any remaining particles
+    this.cleanupAllParticles();
     
     // Show game over text
     this.gameOverText.setVisible(true);
@@ -765,18 +768,33 @@ class Start extends Phaser.Scene {
       angle: { min: 0, max: 360 },
       scale: { start: 1, end: 0 },
       blendMode: 'ADD',
-      lifespan: 800,
+      lifespan: 600, // Reduced from 800 to prevent accumulation
       gravityY: 200,
-      quantity: type === 'barrier' ? 8 : 12,
+      quantity: type === 'barrier' ? 6 : 8, // Reduced particle count
       emitting: false
     });
     
     // Emit all particles at once
-    emitter.explode(type === 'barrier' ? 8 : 12);
+    emitter.explode(type === 'barrier' ? 6 : 8);
     
-    // Clean up after animation completes
-    this.time.delayedCall(1000, () => {
-      emitter.destroy();
+    // Clean up more aggressively
+    this.time.delayedCall(700, () => { // Reduced from 1000
+      if (emitter && emitter.active) {
+        emitter.destroy();
+      }
+    });
+  }
+  
+  cleanupAllParticles() {
+    // Find and destroy all particle emitters in the scene
+    this.children.list.forEach(child => {
+      if (child.type === 'ParticleEmitter' || child instanceof Phaser.GameObjects.Particles.ParticleEmitter) {
+        try {
+          child.destroy();
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+      }
     });
   }
 } 
