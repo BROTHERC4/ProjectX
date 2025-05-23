@@ -143,7 +143,7 @@ class CreditsScene extends Phaser.Scene {
       "Visit the GitHub repository for source code",
       "and contribute to the project!",
       "",
-      "© 2024 - Licensed under GNU GPL v3"
+      "© 2025 - Licensed under GNU GPL v3"
     ];
     
     // Create a container for credits text
