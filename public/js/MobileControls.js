@@ -1,6 +1,6 @@
 /**
  * Mobile Controls Utility
- * Handles touch controls for mobile devices
+ * Handles touch controls for mobile devices with multi-touch support
  */
 class MobileControls {
   constructor(scene) {
@@ -12,6 +12,12 @@ class MobileControls {
     this.leftPressed = false;
     this.rightPressed = false;
     this.firePressed = false;
+    
+    // Multi-touch tracking - track each finger independently
+    this.activePointers = new Map(); // Track multiple fingers by pointer ID
+    this.leftButtonPointerId = null;
+    this.rightButtonPointerId = null;
+    this.firePointerIds = new Set(); // Multiple fingers can shoot
     
     // Control button references
     this.leftButton = null;
@@ -48,15 +54,15 @@ class MobileControls {
     const SCREEN_WIDTH = 800;
     const SCREEN_HEIGHT = 600;
     const BUTTON_SIZE = 80;
-    const BUTTON_Y = SCREEN_HEIGHT - 60; // Move lower to bottom edge
+    const BUTTON_Y = SCREEN_HEIGHT - 60;
     
     // Create left button (bottom left corner)
     this.leftButton = this.scene.add.image(80, BUTTON_Y, 'pointer')
       .setDisplaySize(BUTTON_SIZE, BUTTON_SIZE)
       .setInteractive()
       .setAlpha(0.7)
-      .setDepth(2000) // High depth to be on top
-      .setFlipX(true); // Flip for left direction
+      .setDepth(2000)
+      .setFlipX(true);
     
     // Create right button (bottom right corner)
     this.rightButton = this.scene.add.image(SCREEN_WIDTH - 80, BUTTON_Y, 'pointer')
@@ -65,93 +71,128 @@ class MobileControls {
       .setAlpha(0.7)
       .setDepth(2000);
     
-    // Create invisible fire zone (entire screen except buttons)
+    // Create invisible fire zone (entire screen)
     this.fireZone = this.scene.add.zone(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, SCREEN_WIDTH, SCREEN_HEIGHT)
       .setInteractive()
-      .setDepth(1999); // Just below buttons
+      .setDepth(1999);
     
-    // Set up touch events for left button
-    this.leftButton.on('pointerdown', () => {
-      this.leftPressed = true;
-      this.leftButton.setAlpha(1);
-      this.leftButton.setTint(0x00ff00);
+    // MULTI-TOUCH LEFT BUTTON EVENTS
+    this.leftButton.on('pointerdown', (pointer) => {
+      // Only allow one finger per button
+      if (this.leftButtonPointerId === null) {
+        this.leftButtonPointerId = pointer.id;
+        this.leftPressed = true;
+        this.leftButton.setAlpha(1);
+        this.leftButton.setTint(0x00ff00);
+        console.log('[MOBILE] Left button pressed by pointer:', pointer.id);
+      }
     });
     
-    this.leftButton.on('pointerup', () => {
-      this.leftPressed = false;
-      this.leftButton.setAlpha(0.7);
-      this.leftButton.clearTint();
+    this.leftButton.on('pointerup', (pointer) => {
+      if (this.leftButtonPointerId === pointer.id) {
+        this.leftButtonPointerId = null;
+        this.leftPressed = false;
+        this.leftButton.setAlpha(0.7);
+        this.leftButton.clearTint();
+        console.log('[MOBILE] Left button released by pointer:', pointer.id);
+      }
     });
     
-    this.leftButton.on('pointerout', () => {
-      this.leftPressed = false;
-      this.leftButton.setAlpha(0.7);
-      this.leftButton.clearTint();
+    this.leftButton.on('pointerout', (pointer) => {
+      if (this.leftButtonPointerId === pointer.id) {
+        this.leftButtonPointerId = null;
+        this.leftPressed = false;
+        this.leftButton.setAlpha(0.7);
+        this.leftButton.clearTint();
+      }
     });
     
-    // Set up touch events for right button
-    this.rightButton.on('pointerdown', () => {
-      this.rightPressed = true;
-      this.rightButton.setAlpha(1);
-      this.rightButton.setTint(0x00ff00);
+    // MULTI-TOUCH RIGHT BUTTON EVENTS
+    this.rightButton.on('pointerdown', (pointer) => {
+      // Only allow one finger per button
+      if (this.rightButtonPointerId === null) {
+        this.rightButtonPointerId = pointer.id;
+        this.rightPressed = true;
+        this.rightButton.setAlpha(1);
+        this.rightButton.setTint(0x00ff00);
+        console.log('[MOBILE] Right button pressed by pointer:', pointer.id);
+      }
     });
     
-    this.rightButton.on('pointerup', () => {
-      this.rightPressed = false;
-      this.rightButton.setAlpha(0.7);
-      this.rightButton.clearTint();
+    this.rightButton.on('pointerup', (pointer) => {
+      if (this.rightButtonPointerId === pointer.id) {
+        this.rightButtonPointerId = null;
+        this.rightPressed = false;
+        this.rightButton.setAlpha(0.7);
+        this.rightButton.clearTint();
+        console.log('[MOBILE] Right button released by pointer:', pointer.id);
+      }
     });
     
-    this.rightButton.on('pointerout', () => {
-      this.rightPressed = false;
-      this.rightButton.setAlpha(0.7);
-      this.rightButton.clearTint();
+    this.rightButton.on('pointerout', (pointer) => {
+      if (this.rightButtonPointerId === pointer.id) {
+        this.rightButtonPointerId = null;
+        this.rightPressed = false;
+        this.rightButton.setAlpha(0.7);
+        this.rightButton.clearTint();
+      }
     });
     
-    // Set up fire zone (tap anywhere else to shoot) - IMPROVED for simultaneous input
+    // MULTI-TOUCH FIRE ZONE EVENTS  
     this.fireZone.on('pointerdown', (pointer) => {
-      // Check if tap is not on control buttons - reduced exclusion zone for better simultaneous input
-      const buttonRadius = 30; // Reduced from 50 to allow easier simultaneous input
+      // Check if this pointer is already controlling a movement button
+      if (pointer.id === this.leftButtonPointerId || pointer.id === this.rightButtonPointerId) {
+        return; // Skip if this finger is already on a movement button
+      }
       
-      // Check left button area (bottom left)
+      // Check if tap is in button exclusion zones
+      const buttonRadius = 50; // Larger exclusion zone for fire detection
       const leftButtonDist = Math.abs(pointer.x - 80) + Math.abs(pointer.y - BUTTON_Y);
-      // Check right button area (bottom right) 
       const rightButtonDist = Math.abs(pointer.x - (SCREEN_WIDTH - 80)) + Math.abs(pointer.y - BUTTON_Y);
       
       if (leftButtonDist < buttonRadius || rightButtonDist < buttonRadius) {
-        // Tap is on or near control buttons, ignore
-        return;
+        return; // Don't fire if tapping near buttons
       }
       
+      // Add this pointer to fire pointers
+      this.firePointerIds.add(pointer.id);
       this.firePressed = true;
-      // Create a brief visual effect at tap location
       this.createFireEffect(pointer.x, pointer.y);
-      console.log('[MOBILE] Fire started at:', pointer.x, pointer.y, 'Movement:', this.leftPressed, this.rightPressed);
+      console.log('[MOBILE] Fire started by pointer:', pointer.id, 'at:', pointer.x, pointer.y);
+      console.log('[MOBILE] Current state - Left:', this.leftPressed, 'Right:', this.rightPressed, 'Fire:', this.firePressed);
     });
     
     this.fireZone.on('pointerup', (pointer) => {
-      this.firePressed = false;
-      console.log('[MOBILE] Fire stopped');
+      // Remove this pointer from fire pointers
+      if (this.firePointerIds.has(pointer.id)) {
+        this.firePointerIds.delete(pointer.id);
+        // Only stop firing if no other fingers are shooting
+        if (this.firePointerIds.size === 0) {
+          this.firePressed = false;
+          console.log('[MOBILE] Fire stopped - no more fire pointers');
+        }
+      }
     });
     
-    // Add pointer move for drag-to-continue shooting
     this.fireZone.on('pointermove', (pointer) => {
-      // If already firing, keep firing (allows for drag-to-continue-shooting)
-      if (this.firePressed) {
-        // Still check if moved onto buttons
-        const buttonRadius = 30;
+      // If this pointer is firing and moves to button area, stop it
+      if (this.firePointerIds.has(pointer.id)) {
+        const buttonRadius = 50;
         const leftButtonDist = Math.abs(pointer.x - 80) + Math.abs(pointer.y - BUTTON_Y);
         const rightButtonDist = Math.abs(pointer.x - (SCREEN_WIDTH - 80)) + Math.abs(pointer.y - BUTTON_Y);
         
         if (leftButtonDist < buttonRadius || rightButtonDist < buttonRadius) {
-          this.firePressed = false; // Stop firing if moved onto buttons
-          console.log('[MOBILE] Fire stopped - moved to button area');
+          this.firePointerIds.delete(pointer.id);
+          if (this.firePointerIds.size === 0) {
+            this.firePressed = false;
+            console.log('[MOBILE] Fire stopped - moved to button area');
+          }
         }
       }
     });
     
     this.controlsVisible = true;
-    console.log('[MOBILE] Mobile controls created and enabled');
+    console.log('[MOBILE] Multi-touch mobile controls created and enabled');
   }
   
   createFireEffect(x, y) {
@@ -211,6 +252,12 @@ class MobileControls {
     if (this.rightButton) this.rightButton.destroy();
     if (this.fireZone) this.fireZone.destroy();
     this.controlsVisible = false;
+    
+    // Clear multi-touch tracking
+    this.activePointers.clear();
+    this.firePointerIds.clear();
+    this.leftButtonPointerId = null;
+    this.rightButtonPointerId = null;
   }
   
   // Setup camera following for mobile
