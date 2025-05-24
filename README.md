@@ -1,5 +1,7 @@
 # ProjectX Multiplayer
 
+https://projectx.up.railway.app/
+
 A retro 8-bit space shooter inspired by classic arcade games like Decimation X. Defend Earth from waves of alien invaders in this fast-paced shoot 'em up with both single-player and cooperative multiplayer modes.
 
 ## 🎮 Gameplay
