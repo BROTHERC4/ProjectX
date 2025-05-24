@@ -1,0 +1,454 @@
+# ProjectX Development Rules for Cursor AI
+
+You are an expert Phaser.js game developer working on ProjectX, a multiplayer space shooter with real-time networking.
+
+## 🎮 PROJECT CONTEXT
+
+ProjectX is a retro-style multiplayer space shooter inspired by classic arcade games like Space Invaders and Decimation X. 
+
+**Architecture:**
+- Frontend: Phaser.js 3.60+ with modular scene-based design
+- Backend: Node.js + Express.js + Socket.io for real-time multiplayer
+- Deployment: Railway platform with auto-scaling WebSocket support
+- Mobile: Touch controls with multi-finger support, responsive scaling
+- Assets: GNU GPL v3 licensed with CC BY 3.0/CC0 compliant assets
+
+**Core Features:**
+- Single-player mode with wave progression system
+- Multiplayer lobbies with up to 4 players
+- Mobile-first responsive design
+- Server-authoritative game state
+- Real-time synchronization with lag compensation
+
+## 🏗️ ARCHITECTURE RULES
+
+### File Structure
+```
+public/js/scenes/          # Phaser game scenes
+public/js/                 # Client utilities (socket, mobile controls)
+public/assets/             # Game assets with proper attribution
+server.js                  # Main server entry point
+gameState.js              # Server game logic
+roomManager.js            # Multiplayer room management
+waveManager.js            # Enemy wave generation
+```
+
+### Naming Conventions
+- **Classes:** PascalCase (`MenuScene`, `MobileControls`, `WaveManager`)
+- **Functions:** camelCase (`createExplosion`, `updateEnemies`, `handlePlayerInput`)
+- **Constants:** UPPER_SNAKE_CASE (`PLAYER_SPEED`, `BULLET_SPEED`, `GAME_SPEED`)
+- **Files:** PascalCase for classes, kebab-case for utilities
+- **Assets:** kebab-case with descriptive names (`jellyfish-large1.png`)
+
+## 🎯 PHASER.JS RULES
+
+### Scene Structure (MANDATORY)
+```javascript
+class YourScene extends Phaser.Scene {
+  constructor() {
+    super('YourScene');
+    // Initialize scene-specific properties
+  }
+  
+  init(data) {
+    // Process data from previous scene
+    // Initialize scene variables
+  }
+  
+  preload() {
+    // ALWAYS include error handling
+    this.load.on('loaderror', (fileObj) => {
+      console.error('Error loading asset:', fileObj.src);
+      this.scene.start('MenuScene', { error: `Failed to load: ${fileObj.key}` });
+    });
+    
+    // Load assets
+  }
+  
+  create() {
+    // Create game objects
+    // Setup event handlers AFTER object creation
+    this.setupEventHandlers();
+  }
+  
+  update(time, delta) {
+    // Game loop logic - keep lightweight
+    // Early return if game state invalid
+  }
+  
+  shutdown() {
+    // MANDATORY: Clean up all resources
+    this.cleanupResources();
+  }
+}
+```
+
+### Asset Management Rules
+- **Background Manager:** ALWAYS use `window.backgroundManager` for consistency
+- **Mobile Controls:** ALWAYS initialize `MobileControls` for scenes with player input
+- **Error Handling:** NEVER proceed without proper asset loading error handling
+- **Attribution:** ALWAYS include asset credits for CC BY 3.0 assets
+
+```javascript
+// CORRECT: Use background manager
+if (window.backgroundManager) {
+  window.backgroundManager.preloadBackgrounds(this);
+  this.background = window.backgroundManager.createBackground(this);
+} else {
+  this.load.image('background', 'assets/space.png'); // Fallback
+}
+```
+
+### Object Lifecycle Management
+```javascript
+// MANDATORY: Implement object pooling for frequently created objects
+this.bulletPool = this.physics.add.group({
+  maxSize: 20,
+  createCallback: (bullet) => {
+    bullet.setActive(false).setVisible(false);
+    return bullet;
+  }
+});
+
+// MANDATORY: Clean up in shutdown
+shutdown() {
+  this.tweens.killAll();
+  this.time.removeAllEvents();
+  this.input.removeAllListeners();
+  this.mobileControls?.destroy();
+  this.cleanupAllParticles();
+}
+```
+
+## 🌐 MULTIPLAYER RULES
+
+### Server-Authoritative Pattern (CRITICAL)
+- **Client:** Send input only, render server state
+- **Server:** Process all game logic, validate all actions
+- **Never:** Trust client calculations for game state
+
+```javascript
+// CLIENT: Send input only
+const input = {
+  left: this.cursors.left.isDown,
+  right: this.cursors.right.isDown,
+  fire: this.fireKey.isDown,
+  time: Date.now() // For server-side rate limiting
+};
+window.socketClient.sendInput(input);
+
+// SERVER: Process and validate
+function handlePlayerInput(playerId, input) {
+  const player = findPlayer(playerId);
+  if (!player || !validateInput(input)) return null;
+  
+  // Server processes movement
+  updatePlayerPosition(player, input, deltaTime);
+  
+  // Server handles shooting with rate limiting
+  if (input.fire && canPlayerFire(player, input.time)) {
+    createBullet(player);
+  }
+}
+```
+
+### Socket Event Handling
+```javascript
+// MANDATORY: Handle all connection states
+setupSocketHandlers() {
+  this.socket.on('connect', this.handleConnect.bind(this));
+  this.socket.on('disconnect', this.handleDisconnect.bind(this));
+  this.socket.on('connect_error', this.handleError.bind(this));
+  this.socket.on('game_state', this.handleGameState.bind(this));
+  
+  // ALWAYS validate received data
+  this.socket.on('game_state', (gameState) => {
+    if (!gameState || typeof gameState !== 'object') {
+      console.error('Invalid game state received');
+      return;
+    }
+    this.updateGameState(gameState);
+  });
+}
+```
+
+### State Synchronization Rules
+- **Delta Time:** Use server-provided delta time for consistent physics
+- **Interpolation:** Smooth client rendering between server updates  
+- **Prediction:** Client-side prediction with server reconciliation
+- **Validation:** Server validates all player actions
+
+## 📱 MOBILE DEVELOPMENT RULES
+
+### Touch Controls (MANDATORY)
+```javascript
+// ALWAYS implement multi-touch support
+class MobileControls {
+  constructor(scene) {
+    this.scene = scene;
+    this.isMobile = this.detectMobile();
+    this.activePointers = new Map(); // Track multiple fingers
+    
+    if (this.isMobile) {
+      this.createMobileControls();
+    }
+  }
+  
+  // MANDATORY: Support simultaneous movement + shooting
+  setupMultiTouch() {
+    this.leftButtonPointerId = null;
+    this.rightButtonPointerId = null;
+    this.firePointerIds = new Set();
+  }
+}
+```
+
+### Responsive Design Rules
+- **Scaling:** Use `Phaser.Scale.FIT` with appropriate min/max bounds
+- **Controls:** Position touch controls relative to screen dimensions
+- **Performance:** Reduce particle effects and physics complexity on mobile
+- **Accessibility:** Support both touch and keyboard input simultaneously
+
+## ⚡ PERFORMANCE RULES
+
+### Object Pooling (MANDATORY for frequently created objects)
+```javascript
+// Bullets, particles, enemies - MUST use object pools
+class GameObjectPool {
+  constructor(scene, classType, initialSize = 10) {
+    this.scene = scene;
+    this.pool = [];
+    this.active = [];
+    
+    // Pre-populate pool
+    for (let i = 0; i < initialSize; i++) {
+      const obj = new classType(scene);
+      obj.setActive(false).setVisible(false);
+      this.pool.push(obj);
+    }
+  }
+}
+```
+
+### Memory Management
+```javascript
+// MANDATORY: Clean up ALL resources
+cleanupAllParticles() {
+  this.children.list.forEach(child => {
+    if (child.type === 'ParticleEmitter') {
+      child.destroy();
+    }
+  });
+}
+
+// MANDATORY: Limit active objects
+updateBullets() {
+  // Remove off-screen bullets immediately
+  this.bullets.children.entries.forEach(bullet => {
+    if (bullet.y < -20 || bullet.y > 620) {
+      this.bulletPool.release(bullet);
+    }
+  });
+}
+```
+
+### Network Optimization
+- **Delta Compression:** Only send changed game state data
+- **Rate Limiting:** Server enforces fire rates, movement limits
+- **Batching:** Group multiple small updates into single packets
+- **Prediction:** Client-side movement prediction to reduce lag
+
+## 🎨 ASSET MANAGEMENT RULES
+
+### Attribution Requirements (LEGAL COMPLIANCE)
+```javascript
+// MANDATORY: Include attribution for CC BY 3.0 assets
+const REQUIRED_ATTRIBUTIONS = {
+  'jellyfish-sprites': {
+    creator: 'RAPIDPUNCHES',
+    license: 'CC BY 3.0',
+    source: 'https://opengameart.org/content/primary-jellies',
+    required: true // MUST display in credits
+  },
+  'heart-icon': {
+    creator: 'NicoleMarieProductions', 
+    license: 'CC BY 3.0',
+    source: 'https://opengameart.org/content/heart-1616',
+    required: true
+  }
+};
+```
+
+### Asset Loading Patterns
+```javascript
+// MANDATORY: Progressive loading with fallbacks
+preload() {
+  // Critical assets first
+  this.load.image('ship', 'assets/spaceship.png');
+  
+  // Background variants with fallback
+  if (window.backgroundManager) {
+    window.backgroundManager.preloadBackgrounds(this);
+  }
+  
+  // ALWAYS handle loading errors
+  this.load.on('loaderror', this.handleAssetError.bind(this));
+}
+```
+
+## 🔧 CODE QUALITY RULES
+
+### Error Handling (MANDATORY)
+```javascript
+// NEVER silently fail - always handle errors gracefully
+try {
+  this.player.setPosition(x, y);
+} catch (error) {
+  console.error('Player positioning error:', error);
+  this.emergencyPlayerRecovery();
+}
+
+// Network errors MUST trigger reconnection attempts
+socket.on('connect_error', (error) => {
+  this.showConnectionError();
+  this.attemptReconnection();
+});
+```
+
+### Input Validation
+```javascript
+// MANDATORY: Validate all inputs
+function validatePlayerInput(input) {
+  return input && 
+         typeof input === 'object' &&
+         typeof input.left === 'boolean' &&
+         typeof input.right === 'boolean' &&
+         typeof input.fire === 'boolean' &&
+         typeof input.time === 'number';
+}
+```
+
+### Constants Management
+```javascript
+// MANDATORY: Extract all magic numbers
+const GAME_CONFIG = {
+  PLAYER_SPEED: 200,
+  BULLET_SPEED: 400,
+  ENEMY_SPEED: 35,
+  FIRE_RATE: 200, // milliseconds
+  SCREEN_WIDTH: 800,
+  SCREEN_HEIGHT: 600,
+  MAX_BULLETS: 10,
+  INVINCIBILITY_TIME: 1500
+};
+```
+
+## 🚀 DEPLOYMENT RULES
+
+### Railway Optimization
+```javascript
+// MANDATORY: Railway-specific configuration
+const config = {
+  port: process.env.PORT || 3000,
+  socketOrigin: process.env.NODE_ENV === 'production' 
+    ? process.env.CLIENT_URL 
+    : '*',
+  maxPlayers: parseInt(process.env.MAX_PLAYERS_PER_ROOM) || 4
+};
+
+// MANDATORY: Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    activeRooms: Object.keys(rooms).length
+  });
+});
+```
+
+## 📝 DOCUMENTATION RULES
+
+### Comment Standards
+```javascript
+/**
+ * Handle enemy bullet collision with player
+ * @param {Phaser.GameObjects.Sprite} bullet - Enemy bullet sprite  
+ * @param {Phaser.GameObjects.Sprite} player - Player sprite
+ * @description Manages player damage, invincibility frames, and cleanup
+ * when hit by enemy projectiles. Includes safety checks for multiplayer.
+ */
+function enemyBulletHitPlayer(bullet, player) {
+  // Early exit conditions
+  if (!bullet.active || !player.active || this.gameOver || player.invincible) {
+    return;
+  }
+  
+  // Implementation...
+}
+```
+
+## 🎯 SPECIFIC PROJECTX PATTERNS
+
+### Wave Management
+```javascript
+// Use WaveManager for procedural enemy generation
+if (this.waveManager) {
+  const enemies = this.waveManager.generateWave();
+  this.createEnemiesFromData(enemies);
+} else {
+  this.createStaticEnemies(); // Fallback
+}
+```
+
+### Background System
+```javascript
+// ALWAYS reset background for new games
+if (window.backgroundManager) {
+  window.backgroundManager.reset();
+  window.backgroundManager.preloadBackgrounds(this);
+}
+```
+
+### Mobile Integration
+```javascript
+// MANDATORY: Initialize mobile controls in game scenes
+this.mobileControls = new MobileControls(this);
+if (this.player) {
+  this.mobileControls.setupCameraFollow(this.player);
+}
+```
+
+## 🚨 CRITICAL ANTI-PATTERNS
+
+### NEVER DO:
+- Skip asset loading error handling
+- Trust client-side calculations for multiplayer
+- Create objects without cleanup in shutdown()
+- Ignore mobile touch input requirements
+- Use magic numbers instead of constants
+- Forget CC BY 3.0 attribution requirements
+- Allow memory leaks from particles/tweens
+- Skip input validation on server
+- Hard-code server URLs in production
+
+### ALWAYS DO:
+- Use server-authoritative game state
+- Implement object pooling for frequent objects
+- Clean up resources in shutdown methods
+- Handle connection errors gracefully
+- Validate all inputs and network data
+- Include proper asset attribution
+- Support both keyboard and touch input
+- Use environment variables for configuration
+
+## 💡 AI ASSISTANCE GUIDELINES
+
+- **Be Direct:** Provide actual code, not explanations
+- **Consider Performance:** Always suggest object pooling and optimization
+- **Mobile First:** Every UI change should consider mobile touch
+- **Multiplayer Safe:** All game logic must work in multiplayer context
+- **Error Resilient:** Include error handling in all suggestions
+- **Asset Compliant:** Respect licensing requirements
+- **Railway Ready:** Consider deployment implications
+
+Focus on immediate, actionable solutions that follow these established patterns.

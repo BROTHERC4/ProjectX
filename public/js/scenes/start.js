@@ -1,6 +1,8 @@
 /**
  * StartScene - Main game scene (multiplayer version)
  */
+import { ObjectPool } from '../../src/utils/ObjectPool.js';
+
 class Start extends Phaser.Scene {
   constructor() {
     super('Start');
@@ -140,6 +142,10 @@ class Start extends Phaser.Scene {
     
     // Initialize mobile controls
     this.mobileControls = new MobileControls(this);
+
+    this.bulletPool = new ObjectPool(this, 'bullet', 40);
+    this.enemyBulletPool = new ObjectPool(this, 'enemy-bullet', 80);
+    this.explosionPool = new ObjectPool(this, 'barrier-piece', 40);
   }
   
   createAnimations() {
@@ -301,10 +307,6 @@ class Start extends Phaser.Scene {
     // Create groups for players
     this.players = this.physics.add.group();
     
-    // Create groups for bullets
-    this.bullets = this.physics.add.group();
-    this.enemyBullets = this.physics.add.group();
-    
     // Create groups for barriers
     this.barrierPieces = this.physics.add.group({
       immovable: true,
@@ -345,8 +347,8 @@ class Start extends Phaser.Scene {
       
       // Update all game objects
       this.updatePlayers(gameState.players);
-      this.updateBullets(gameState.bullets, this.bullets);
-      this.updateBullets(gameState.enemyBullets, this.enemyBullets);
+      this.updateBullets(gameState.bullets, this.bulletPool);
+      this.updateBullets(gameState.enemyBullets, this.enemyBulletPool);
       this.updateEnemies(gameState.enemies);
       this.updateBarriers(gameState.barriers);
 
@@ -525,32 +527,13 @@ class Start extends Phaser.Scene {
     });
   }
   
-  updateBullets(serverBullets, bulletGroup) {
-    const existingBullets = bulletGroup.getChildren();
-    
-    // Update existing bullets and create new ones
+  updateBullets(serverBullets, bulletPool) {
+    // Use object pool for bullets
+    bulletPool.pool.forEach(bullet => bullet.setActive(false).setVisible(false));
     serverBullets.forEach(serverBullet => {
-      let bulletSprite = existingBullets.find(b => b.bulletId === serverBullet.id);
-      
-      if (!bulletSprite) {
-        // Create new bullet sprite
-        bulletSprite = bulletGroup.create(
-          serverBullet.position.x, 
-          serverBullet.position.y, 
-          bulletGroup === this.bullets ? 'bullet' : 'enemy-bullet'
-        );
-        bulletSprite.bulletId = serverBullet.id;
-      }
-      
-      // Update position
-      bulletSprite.x = serverBullet.position.x;
-      bulletSprite.y = serverBullet.position.y;
-    });
-    
-    // Remove bullets that no longer exist
-    existingBullets.forEach(bullet => {
-      if (!serverBullets.some(b => b.id === bullet.bulletId)) {
-        bullet.destroy();
+      const bullet = bulletPool.get(serverBullet.position.x, serverBullet.position.y);
+      if (bullet) {
+        bullet.bulletId = serverBullet.id;
       }
     });
   }
@@ -828,40 +811,17 @@ class Start extends Phaser.Scene {
   }
   
   createExplosion(x, y, type = 'enemy') {
-    // Check if position is reasonable
-    if (x < -100 || x > 900 || y < -100 || y > 700) {
-      console.warn(`[PARTICLE WARNING] Explosion at extreme position (${x}, ${y}) type: ${type}`);
+    if (x < -50 || x > 850 || y < -50 || y > 650) return;
+    const particle = this.explosionPool.get(x, y);
+    if (particle) {
+      particle.setVelocity(
+        Phaser.Math.Between(-100, 100),
+        Phaser.Math.Between(-100, 100)
+      );
+      this.time.delayedCall(600, () => {
+        this.explosionPool.release(particle);
+      });
     }
-    
-    // Don't create explosions for off-screen positions
-    if (x < -50 || x > 850 || y < -50 || y > 650) {
-      console.log(`[PARTICLE DEBUG] Blocking off-screen explosion at (${x}, ${y})`);
-      return;
-    }
-    
-    console.log(`[PARTICLE DEBUG] Creating explosion at (${x}, ${y}) type: ${type}`);
-    
-    // Create a particle explosion effect using barrier-piece texture for all explosions
-    const emitter = this.add.particles(x, y, 'barrier-piece', {
-      speed: { min: 50, max: 150 },
-      angle: { min: 0, max: 360 },
-      scale: { start: 1, end: 0 },
-      blendMode: 'ADD',
-      lifespan: 600, // Reduced from 800 to prevent accumulation
-      gravityY: 200,
-      quantity: type === 'barrier' ? 6 : 8, // Reduced particle count
-      emitting: false
-    });
-    
-    // Emit all particles at once
-    emitter.explode(type === 'barrier' ? 6 : 8);
-    
-    // Clean up more aggressively
-    this.time.delayedCall(700, () => { // Reduced from 1000
-      if (emitter && emitter.active) {
-        emitter.destroy();
-      }
-    });
   }
   
   hideGameObjects() {
@@ -874,13 +834,8 @@ class Start extends Phaser.Scene {
     });
     
     // Hide all bullets
-    this.bullets.getChildren().forEach(bullet => {
-      bullet.setAlpha(0.2);
-    });
-    
-    this.enemyBullets.getChildren().forEach(bullet => {
-      bullet.setAlpha(0.2);
-    });
+    this.bulletPool.pool.forEach(bullet => bullet.setActive(false).setVisible(false));
+    this.enemyBulletPool.pool.forEach(bullet => bullet.setActive(false).setVisible(false));
     
     // Hide all players
     this.players.getChildren().forEach(player => {
@@ -894,6 +849,7 @@ class Start extends Phaser.Scene {
   }
   
   cleanupAllParticles() {
+    this.explosionPool.releaseAll();
     // Find and destroy all particle emitters in the scene
     this.children.list.forEach(child => {
       if (child.type === 'ParticleEmitter' || child instanceof Phaser.GameObjects.Particles.ParticleEmitter) {
