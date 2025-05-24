@@ -1,7 +1,7 @@
 // ObjectPool.js
 // Reusable object pool for Phaser sprites
 
-export class ObjectPool {
+class ObjectPool {
   /**
    * @param {Phaser.Scene} scene - The Phaser scene
    * @param {string} key - The texture key for the sprite
