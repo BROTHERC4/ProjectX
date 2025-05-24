@@ -328,7 +328,7 @@ class SinglePlayerStart extends Phaser.Scene {
         this.checkWaveCompletion();
 
         // Move enemy bullets
-        this.enemyBulletPool.children.entries.forEach(bullet => {
+        this.enemyBulletPool.pool.forEach(bullet => {
             if (bullet.active) {
                 bullet.y += this.ENEMY_BULLET_SPEED * (delta / 1000);
                 
@@ -341,7 +341,7 @@ class SinglePlayerStart extends Phaser.Scene {
         });
 
         // Move player bullets
-        this.bulletPool.children.entries.forEach(bullet => {
+        this.bulletPool.pool.forEach(bullet => {
             if (bullet.active) {
                 bullet.y -= this.BULLET_SPEED * (delta / 1000);
                 
@@ -882,7 +882,7 @@ class SinglePlayerStart extends Phaser.Scene {
 
     clearEnemyBulletsNearPlayer() {
         
-        this.enemyBulletPool.children.each(bullet => {
+        this.enemyBulletPool.pool.forEach(bullet => {
             if (bullet.active) {
                 const distToPlayer = Phaser.Math.Distance.Between(
                     bullet.x, bullet.y, 
