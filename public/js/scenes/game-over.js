@@ -103,7 +103,7 @@ class GameOverScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .on('pointerover', () => lobbyButton.setStyle({ backgroundColor: '#3333aa' }))
       .on('pointerout', () => lobbyButton.setStyle({ backgroundColor: '#222266' }))
-      .on('pointerdown', () => {
+      .on('pointerup', () => {
         this.scene.start('LobbyScene', {
           roomId: this.roomId,
           playerId: this.playerId,
@@ -117,7 +117,7 @@ class GameOverScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .on('pointerover', () => menuButton.setStyle({ backgroundColor: '#3333aa' }))
       .on('pointerout', () => menuButton.setStyle({ backgroundColor: '#222266' }))
-      .on('pointerdown', () => {
+      .on('pointerup', () => {
         window.socketClient.leaveRoom();
         this.scene.start('MenuScene');
       });
