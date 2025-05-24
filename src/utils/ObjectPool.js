@@ -43,4 +43,6 @@ export class ObjectPool {
   releaseAll() {
     this.pool.forEach(obj => this.release(obj));
   }
-} 
+}
+
+window.ObjectPool = ObjectPool; 

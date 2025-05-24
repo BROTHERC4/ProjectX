@@ -1,4 +1,4 @@
-import { ObjectPool } from '../../src/utils/ObjectPool.js';
+// import { ObjectPool } from '../../src/utils/ObjectPool.js';
 
 class SinglePlayerStart extends Phaser.Scene {
 
@@ -184,9 +184,9 @@ class SinglePlayerStart extends Phaser.Scene {
         this.mobileControls.setupCameraFollow(this.player);
 
         // Replace bullet groups with object pools
-        this.bulletPool = new ObjectPool(this, 'bullet', 20);
-        this.enemyBulletPool = new ObjectPool(this, 'enemy-bullet', 40);
-        this.explosionPool = new ObjectPool(this, 'barrier-piece', 20); // For explosion particles
+        this.bulletPool = new window.ObjectPool(this, 'bullet', 20);
+        this.enemyBulletPool = new window.ObjectPool(this, 'enemy-bullet', 40);
+        this.explosionPool = new window.ObjectPool(this, 'barrier-piece', 20); // For explosion particles
 
         // Create enemy groups
         this.jellyfishLarge = this.physics.add.group();

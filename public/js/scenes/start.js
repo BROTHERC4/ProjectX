@@ -1,7 +1,7 @@
 /**
  * StartScene - Main game scene (multiplayer version)
  */
-import { ObjectPool } from '../../src/utils/ObjectPool.js';
+// import { ObjectPool } from '../../src/utils/ObjectPool.js';
 
 class Start extends Phaser.Scene {
   constructor() {
@@ -143,9 +143,9 @@ class Start extends Phaser.Scene {
     // Initialize mobile controls
     this.mobileControls = new MobileControls(this);
 
-    this.bulletPool = new ObjectPool(this, 'bullet', 40);
-    this.enemyBulletPool = new ObjectPool(this, 'enemy-bullet', 80);
-    this.explosionPool = new ObjectPool(this, 'barrier-piece', 40);
+    this.bulletPool = new window.ObjectPool(this, 'bullet', 40);
+    this.enemyBulletPool = new window.ObjectPool(this, 'enemy-bullet', 80);
+    this.explosionPool = new window.ObjectPool(this, 'barrier-piece', 40);
   }
   
   createAnimations() {
