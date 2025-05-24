@@ -169,6 +169,7 @@ This game is designed for deployment on [Railway](https://railway.app/), a moder
 
 ### Public Domain Assets (CC0)
 - **Wasp Sprite**: Created by Spring Spring
+- **Pointer Arrow**: Created by INFECTION656 ([OpenGameArt](https://opengameart.org/content/rpg-gui-selection-arrow)), License: CC0 1.0 (Public Domain)
 - **Space Backgrounds**: Created by Screaming Brain Studios  
 - **Spaceship Sprites**: Generated using GrokAI
 

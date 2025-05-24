@@ -149,7 +149,8 @@ class SocketClient {
       }
     });
     
-    this.socket.on('game_ended', (data) => {      
+    this.socket.on('game_ended', (data) => {
+      
       if (this.onGameEnded) {
         this.onGameEnded(data);
       }

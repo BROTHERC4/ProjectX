@@ -31,7 +31,14 @@ This project demonstrates the collaborative potential of human creativity combin
 - **Services**: Full-stack hosting with Node.js runtime and static file serving
 - **Benefits**: Seamless multiplayer game hosting with global CDN
 
-## 🎨 Visual Assets
+## �� Visual Assets
+
+### Pointer Arrow (CC0 - Public Domain)
+- **Creator**: INFECTION656
+- **Source**: https://opengameart.org/content/rpg-gui-selection-arrow
+- **License**: CC0 1.0 (Public Domain)
+- **Files Used**: Pointer.png
+- **Usage**: Mobile/desktop control arrows for movement
 
 ### Jellyfish Sprites (CC BY 3.0 - Attribution Required)
 - **Creator**: rapidpunches (RAPIDPUNCHES)
