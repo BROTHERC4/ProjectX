@@ -81,6 +81,11 @@ class SinglePlayerStart extends Phaser.Scene {
     }
 
     create() {
+        // Replace bullet groups with object pools (must be before cleanupAllParticles)
+        this.bulletPool = new window.ObjectPool(this, 'bullet', 20);
+        this.enemyBulletPool = new window.ObjectPool(this, 'enemy-bullet', 40);
+        this.explosionPool = new window.ObjectPool(this, 'barrier-piece', 20); // For explosion particles
+
         // Clean up any leftover particles from previous games
         this.cleanupAllParticles();
         
@@ -182,11 +187,6 @@ class SinglePlayerStart extends Phaser.Scene {
         
         // Setup camera follow for mobile if needed
         this.mobileControls.setupCameraFollow(this.player);
-
-        // Replace bullet groups with object pools
-        this.bulletPool = new window.ObjectPool(this, 'bullet', 20);
-        this.enemyBulletPool = new window.ObjectPool(this, 'enemy-bullet', 40);
-        this.explosionPool = new window.ObjectPool(this, 'barrier-piece', 20); // For explosion particles
 
         // Create enemy groups
         this.jellyfishLarge = this.physics.add.group();
