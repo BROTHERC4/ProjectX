@@ -301,10 +301,17 @@ class SinglePlayerStart extends Phaser.Scene {
             return;
         }
 
-        // Check if player is invisible (might indicate a problem)
-        if (!this.player.visible && !this.playerInvincible && this.DEBUG) {
-            console.log("Player is invisible but not invincible - triggering emergency recovery");
-            this.emergencyPlayerRecovery();
+        // Check if player is invisible or inactive (might indicate a problem)
+        if ((!this.player.visible || !this.player.active) && this.DEBUG) {
+            if (this.playerInvincible) {
+                // During invincibility, force player to stay active and visible
+                console.log("Player became inactive/invisible during invincibility - fixing immediately");
+                this.player.setActive(true);
+                this.player.setVisible(true);
+            } else {
+                console.log("Player is inactive/invisible but not invincible - triggering emergency recovery");
+                this.emergencyPlayerRecovery();
+            }
         }
 
         // Handle player input (keyboard + mobile)
@@ -738,6 +745,10 @@ class SinglePlayerStart extends Phaser.Scene {
         bullet.setActive(false);
         bullet.setVisible(false);
         
+        // IMMEDIATELY ensure player stays active and visible (before anything else can interfere)
+        player.setActive(true);
+        player.setVisible(true);
+        
         // Make player invincible temporarily
         this.playerInvincible = true;
         
@@ -756,12 +767,14 @@ class SinglePlayerStart extends Phaser.Scene {
             // Stop player movement temporarily
             player.setVelocity(0, 0);
             
-            // Ensure player stays visible and active
-            player.setVisible(true);
+            // Force player to stay active and visible again (in case something changed it)
             player.setActive(true);
+            player.setVisible(true);
             
             // Kill any existing tweens on the player to prevent conflicts
             this.tweens.killTweensOf(player);
+            
+            if (this.DEBUG) console.log("Player state after setup - active:", player.active, "visible:", player.visible, "alpha:", player.alpha);
             
             // Create blinking effect for invincibility (keep player in same spot)
             this.tweens.add({
@@ -770,13 +783,22 @@ class SinglePlayerStart extends Phaser.Scene {
                 duration: 200,
                 yoyo: true,
                 repeat: 4, // Blink 5 times total
+                onUpdate: () => {
+                    // Ensure player stays active and visible during the tween
+                    if (!player.active || !player.visible) {
+                        if (this.DEBUG) console.log("Player became inactive/invisible during tween - fixing");
+                        player.setActive(true);
+                        player.setVisible(true);
+                    }
+                },
                 onComplete: () => {
                     if (this.DEBUG) console.log("Tween complete - Player exists:", !!player, "active:", player?.active, "visible:", player?.visible);
-                    if (player && player.active) {
+                    if (player) {
                         player.alpha = 1;
+                        player.setActive(true);
                         player.setVisible(true);
                         this.playerInvincible = false;
-                        if (this.DEBUG) console.log("Player invincibility ended - alpha:", player.alpha, "visible:", player.visible);
+                        if (this.DEBUG) console.log("Player invincibility ended - alpha:", player.alpha, "visible:", player.visible, "active:", player.active);
                     } else {
                         if (this.DEBUG) console.log("Player missing after tween, triggering emergency recovery");
                         this.emergencyPlayerRecovery();
