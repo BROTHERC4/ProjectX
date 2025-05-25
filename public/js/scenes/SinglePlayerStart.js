@@ -296,7 +296,16 @@ class SinglePlayerStart extends Phaser.Scene {
         if (this.gameOver) return;
 
         // Ensure player exists and is active
-        if (!this.player || !this.player.active) return;
+        if (!this.player || !this.player.active) {
+            if (this.DEBUG && !this.gameOver) console.log("Player missing in update! Player exists:", !!this.player, "active:", this.player?.active, "visible:", this.player?.visible);
+            return;
+        }
+
+        // Check if player is invisible (might indicate a problem)
+        if (!this.player.visible && !this.playerInvincible && this.DEBUG) {
+            console.log("Player is invisible but not invincible - triggering emergency recovery");
+            this.emergencyPlayerRecovery();
+        }
 
         // Handle player input (keyboard + mobile)
         let leftPressed = this.cursors.left.isDown;
@@ -723,6 +732,8 @@ class SinglePlayerStart extends Phaser.Scene {
         // Skip if already hit or game over
         if (!bullet.active || !player.active || this.gameOver || this.playerInvincible) return;
         
+        if (this.DEBUG) console.log("Player hit! Before processing - Player active:", player.active, "visible:", player.visible, "alpha:", player.alpha);
+        
         // Deactivate the bullet first
         bullet.setActive(false);
         bullet.setVisible(false);
@@ -745,18 +756,30 @@ class SinglePlayerStart extends Phaser.Scene {
             // Stop player movement temporarily
             player.setVelocity(0, 0);
             
+            // Ensure player stays visible and active
+            player.setVisible(true);
+            player.setActive(true);
+            
+            // Kill any existing tweens on the player to prevent conflicts
+            this.tweens.killTweensOf(player);
+            
             // Create blinking effect for invincibility (keep player in same spot)
             this.tweens.add({
                 targets: player,
-                alpha: 0.3,
-                duration: 150,
+                alpha: 0.5, // Less transparent so player is still clearly visible
+                duration: 200,
                 yoyo: true,
-                repeat: 5, // Blink 6 times total (3 cycles)
+                repeat: 4, // Blink 5 times total
                 onComplete: () => {
+                    if (this.DEBUG) console.log("Tween complete - Player exists:", !!player, "active:", player?.active, "visible:", player?.visible);
                     if (player && player.active) {
                         player.alpha = 1;
+                        player.setVisible(true);
                         this.playerInvincible = false;
-                        if (this.DEBUG) console.log("Player invincibility ended");
+                        if (this.DEBUG) console.log("Player invincibility ended - alpha:", player.alpha, "visible:", player.visible);
+                    } else {
+                        if (this.DEBUG) console.log("Player missing after tween, triggering emergency recovery");
+                        this.emergencyPlayerRecovery();
                     }
                 }
             });
@@ -767,7 +790,7 @@ class SinglePlayerStart extends Phaser.Scene {
         // Simplified emergency recovery - just reset invincibility if something goes wrong
         if (this.DEBUG) console.log("Emergency player recovery triggered");
         
-        if (this.player && this.player.active) {
+        if (this.player) {
             // Ensure player is visible and reset invincibility
             this.player.alpha = 1;
             this.player.setVisible(true);
@@ -777,7 +800,23 @@ class SinglePlayerStart extends Phaser.Scene {
             // Stop any existing tweens on the player
             this.tweens.killTweensOf(this.player);
             
-            if (this.DEBUG) console.log("Emergency recovery completed");
+            // Reset position if player somehow got moved
+            if (this.player.y < 400 || this.player.y > 600) {
+                this.player.y = 550;
+            }
+            if (this.player.x < 0 || this.player.x > 800) {
+                this.player.x = 400;
+            }
+            
+            // Ensure physics body is working
+            if (this.player.body) {
+                this.player.body.enable = true;
+                this.player.setVelocity(0, 0);
+            }
+            
+            if (this.DEBUG) console.log("Emergency recovery completed - Player position:", this.player.x, this.player.y, "alpha:", this.player.alpha);
+        } else {
+            if (this.DEBUG) console.log("Player object missing completely - this should not happen!");
         }
     }
 
