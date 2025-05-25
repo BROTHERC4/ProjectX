@@ -81,13 +81,20 @@ class SinglePlayerStart extends Phaser.Scene {
     }
 
     create() {
-        // Replace bullet groups with object pools (must be before cleanupAllParticles)
-        this.bulletPool = new window.ObjectPool(this, 'bullet', 20);
-        this.enemyBulletPool = new window.ObjectPool(this, 'enemy-bullet', 40);
-        this.explosionPool = new window.ObjectPool(this, 'barrier-piece', 50); // Increased size for explosions
-
         // Clean up any leftover particles from previous games
         this.cleanupAllParticles();
+
+        // Create player bullets using Phaser physics groups
+        this.bullets = this.physics.add.group({
+            defaultKey: 'bullet',
+            maxSize: 10
+        });
+
+        // Create enemy bullets using Phaser physics groups
+        this.enemyBullets = this.physics.add.group({
+            defaultKey: 'enemy-bullet',
+            maxSize: 30
+        });
         
         // Game state flags
         this.gameOver = false;
@@ -203,16 +210,16 @@ class SinglePlayerStart extends Phaser.Scene {
         // Store all colliders
         this.colliders = {
             playerBulletBarrier: this.physics.add.collider(
-                this.bulletPool, this.barrierPieces, this.bulletHitBarrier, null, this
+                this.bullets, this.barrierPieces, this.bulletHitBarrier, null, this
             ),
             enemyBulletBarrier: this.physics.add.collider(
-                this.enemyBulletPool, this.barrierPieces, this.bulletHitBarrier, null, this
+                this.enemyBullets, this.barrierPieces, this.bulletHitBarrier, null, this
             ),
             bulletEnemy: this.physics.add.overlap(
-                this.bulletPool, this.enemies, this.bulletHitEnemy, null, this
+                this.bullets, this.enemies, this.bulletHitEnemy, null, this
             ),
             enemyBulletPlayer: this.physics.add.overlap(
-                this.enemyBulletPool, this.player, this.enemyBulletHitPlayer, null, this
+                this.enemyBullets, this.player, this.enemyBulletHitPlayer, null, this
             )
         };
 
@@ -328,25 +335,27 @@ class SinglePlayerStart extends Phaser.Scene {
         this.checkWaveCompletion();
 
         // Move enemy bullets
-        this.enemyBulletPool.getActiveObjects().forEach(bullet => {
-            if (bullet.active) { // Double check, though getActiveObjects should only return active ones
+        this.enemyBullets.children.entries.forEach(bullet => {
+            if (bullet.active) {
                 bullet.y += this.ENEMY_BULLET_SPEED * (delta / 1000);
                 
                 // Remove bullets that go off screen
                 if (bullet.y > 650) {
-                    this.enemyBulletPool.release(bullet); // Use release
+                    bullet.setActive(false);
+                    bullet.setVisible(false);
                 }
             }
         });
 
         // Move player bullets
-        this.bulletPool.getActiveObjects().forEach(bullet => {
-            if (bullet.active) { // Double check
+        this.bullets.children.entries.forEach(bullet => {
+            if (bullet.active) {
                 bullet.y -= this.BULLET_SPEED * (delta / 1000);
                 
                 // Remove bullets that go off screen
                 if (bullet.y < -20) {
-                    this.bulletPool.release(bullet); // Use release
+                    bullet.setActive(false);
+                    bullet.setVisible(false);
                 }
             }
         });
@@ -407,11 +416,11 @@ class SinglePlayerStart extends Phaser.Scene {
     }
 
     fireBullet() {
-        const bullet = this.bulletPool.get(this.player.x, this.player.y - 30);
+        const bullet = this.bullets.get(this.player.x, this.player.y - 30);
         if (bullet) {
-            // The get() method in the new ObjectPool already sets active and visible.
-            // It also resets velocity.
-            bullet.setVelocityY(-this.BULLET_SPEED); // Set correct speed
+            bullet.setActive(true);
+            bullet.setVisible(true);
+            bullet.setVelocityY(-this.BULLET_SPEED);
         }
     }
 
@@ -634,11 +643,11 @@ class SinglePlayerStart extends Phaser.Scene {
     
     enemyShoot(enemy) {
         if (!enemy || !enemy.active) return; // Ensure enemy is valid
-        const bullet = this.enemyBulletPool.get(enemy.x, enemy.y + 20); // Adjust Y offset if needed
+        const bullet = this.enemyBullets.get(enemy.x, enemy.y + 20);
         if (bullet) {
-            // The get() method in the new ObjectPool already sets active and visible.
-            // It also resets velocity.
-            bullet.setVelocityY(this.ENEMY_BULLET_SPEED); // Set correct speed
+            bullet.setActive(true);
+            bullet.setVisible(true);
+            bullet.setVelocityY(this.ENEMY_BULLET_SPEED);
         }
     }
 
@@ -646,8 +655,9 @@ class SinglePlayerStart extends Phaser.Scene {
         // Skip if either object is not active or game is over
         if (!bullet.active || !barrierPiece.active || this.gameOver) return;
         
-        this.bulletPool.release(bullet); // Release player bullet
-        this.enemyBulletPool.release(bullet); // Also attempt to release if it's an enemy bullet (safer)
+        // Deactivate the bullet
+        bullet.setActive(false);
+        bullet.setVisible(false);
         
         // Reduce barrier piece durability
         barrierPiece.durability--;
@@ -668,7 +678,9 @@ class SinglePlayerStart extends Phaser.Scene {
         // Skip collision if enemy hasn't reached formation yet (prevents off-screen collisions)
         if (!enemy.formationReached) return;
         
-        this.bulletPool.release(bullet); // Release bullet
+        // Deactivate the bullet
+        bullet.setActive(false);
+        bullet.setVisible(false);
 
         // Reduce enemy health
         enemy.health--;
@@ -711,7 +723,9 @@ class SinglePlayerStart extends Phaser.Scene {
         // Skip if already hit or game over
         if (!bullet.active || !player.active || this.gameOver || this.playerInvincible) return;
         
-        this.enemyBulletPool.release(bullet); // Release the enemy bullet
+        // Deactivate the bullet first
+        bullet.setActive(false);
+        bullet.setVisible(false);
         
         // Make player invincible
         this.playerInvincible = true;
@@ -867,22 +881,29 @@ class SinglePlayerStart extends Phaser.Scene {
     
     createExplosion(x, y) {
         if (x < -50 || x > 850 || y < -50 || y > 650) return;
-        const particle = this.explosionPool.get(x, y);
-        if (particle) {
+        
+        // Create simple explosion particles
+        for (let i = 0; i < 5; i++) {
+            const particle = this.physics.add.sprite(x, y, 'barrier-piece');
             particle.setVelocity(
                 Phaser.Math.Between(-100, 100),
                 Phaser.Math.Between(-100, 100)
             );
+            particle.setTint(0xff6600); // Orange color for explosion
+            
+            // Destroy particle after animation
             this.time.delayedCall(400, () => {
-                this.explosionPool.release(particle);
+                if (particle && particle.active) {
+                    particle.destroy();
+                }
             });
         }
     }
 
     clearEnemyBulletsNearPlayer() {
         
-        this.enemyBulletPool.getActiveObjects().forEach(bullet => {
-            if (bullet.active) { // Double check
+        this.enemyBullets.children.each(bullet => {
+            if (bullet.active) {
                 const distToPlayer = Phaser.Math.Distance.Between(
                     bullet.x, bullet.y, 
                     this.player.x, this.player.y
@@ -890,7 +911,8 @@ class SinglePlayerStart extends Phaser.Scene {
                 
                 // Clear bullets that are within 100 pixels of the player
                 if (distToPlayer < 50) {
-                    this.enemyBulletPool.release(bullet); // Use release
+                    bullet.setActive(false);
+                    bullet.setVisible(false);
                     if (this.DEBUG) console.log("Cleared enemy bullet near player");
                 }
             }
@@ -898,9 +920,6 @@ class SinglePlayerStart extends Phaser.Scene {
     }
 
     cleanupAllParticles() {
-        if (this.explosionPool) {
-            this.explosionPool.releaseAll();
-        }
         // Find and destroy all particle emitters in the scene
         this.children.list.forEach(child => {
             if (child.type === 'ParticleEmitter' || child instanceof Phaser.GameObjects.Particles.ParticleEmitter) {
@@ -958,18 +977,14 @@ class SinglePlayerStart extends Phaser.Scene {
         // Cleanup particles (already called in handleGameOver, but good for general shutdown)
         this.cleanupAllParticles();
 
-        // Clear object pools
-        if (this.bulletPool) {
-            this.bulletPool.clearAll(); // Use new clearAll method
-            this.bulletPool = null;
+        // Destroy bullet groups
+        if (this.bullets) {
+            this.bullets.destroy(true, true); // Destroy children and group itself
+            this.bullets = null;
         }
-        if (this.enemyBulletPool) {
-            this.enemyBulletPool.clearAll(); // Use new clearAll method
-            this.enemyBulletPool = null;
-        }
-        if (this.explosionPool) {
-            this.explosionPool.clearAll(); // Use new clearAll method
-            this.explosionPool = null;
+        if (this.enemyBullets) {
+            this.enemyBullets.destroy(true, true); // Destroy children and group itself
+            this.enemyBullets = null;
         }
         
         // Destroy physics groups (if any were not converted to pools or managed by pools)

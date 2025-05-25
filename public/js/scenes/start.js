@@ -143,9 +143,15 @@ class Start extends Phaser.Scene {
     // Initialize mobile controls
     this.mobileControls = new MobileControls(this);
 
-    this.bulletPool = new window.ObjectPool(this, 'bullet', 40);
-    this.enemyBulletPool = new window.ObjectPool(this, 'enemy-bullet', 80);
-    this.explosionPool = new window.ObjectPool(this, 'barrier-piece', 40);
+    // Create bullet groups for multiplayer (server-managed)
+    this.bulletPool = this.physics.add.group({
+      defaultKey: 'bullet',
+      maxSize: 40
+    });
+    this.enemyBulletPool = this.physics.add.group({
+      defaultKey: 'enemy-bullet', 
+      maxSize: 80
+    });
   }
   
   createAnimations() {
@@ -528,11 +534,17 @@ class Start extends Phaser.Scene {
   }
   
   updateBullets(serverBullets, bulletPool) {
-    // Use object pool for bullets
-    bulletPool.pool.forEach(bullet => bullet.setActive(false).setVisible(false));
+    // Clear all bullets first
+    bulletPool.children.entries.forEach(bullet => {
+      bullet.setActive(false).setVisible(false);
+    });
+    
+    // Create bullets based on server state
     serverBullets.forEach(serverBullet => {
       const bullet = bulletPool.get(serverBullet.position.x, serverBullet.position.y);
       if (bullet) {
+        bullet.setActive(true);
+        bullet.setVisible(true);
         bullet.bulletId = serverBullet.id;
       }
     });
@@ -812,14 +824,21 @@ class Start extends Phaser.Scene {
   
   createExplosion(x, y, type = 'enemy') {
     if (x < -50 || x > 850 || y < -50 || y > 650) return;
-    const particle = this.explosionPool.get(x, y);
-    if (particle) {
+    
+    // Create simple explosion particles
+    for (let i = 0; i < 5; i++) {
+      const particle = this.physics.add.sprite(x, y, 'barrier-piece');
       particle.setVelocity(
         Phaser.Math.Between(-100, 100),
         Phaser.Math.Between(-100, 100)
       );
+      particle.setTint(0xff6600); // Orange color for explosion
+      
+      // Destroy particle after animation
       this.time.delayedCall(600, () => {
-        this.explosionPool.release(particle);
+        if (particle && particle.active) {
+          particle.destroy();
+        }
       });
     }
   }
@@ -834,8 +853,12 @@ class Start extends Phaser.Scene {
     });
     
     // Hide all bullets
-    this.bulletPool.pool.forEach(bullet => bullet.setActive(false).setVisible(false));
-    this.enemyBulletPool.pool.forEach(bullet => bullet.setActive(false).setVisible(false));
+    this.bulletPool.children.entries.forEach(bullet => {
+      bullet.setActive(false).setVisible(false);
+    });
+    this.enemyBulletPool.children.entries.forEach(bullet => {
+      bullet.setActive(false).setVisible(false);
+    });
     
     // Hide all players
     this.players.getChildren().forEach(player => {
@@ -849,7 +872,6 @@ class Start extends Phaser.Scene {
   }
   
   cleanupAllParticles() {
-    this.explosionPool.releaseAll();
     // Find and destroy all particle emitters in the scene
     this.children.list.forEach(child => {
       if (child.type === 'ParticleEmitter' || child instanceof Phaser.GameObjects.Particles.ParticleEmitter) {
