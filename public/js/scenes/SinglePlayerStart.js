@@ -744,11 +744,45 @@ class SinglePlayerStart extends Phaser.Scene {
         }
     }
 
-    enemyBulletHitPlayer(bullet, player) {
+    enemyBulletHitPlayer(obj1, obj2) {
+        // Determine which object is the bullet and which is the player
+        let bullet, player;
+        
+        // Check if obj1 is the player (it should have a texture key of 'ship')
+        if (obj1.texture && obj1.texture.key === 'ship') {
+            player = obj1;
+            bullet = obj2;
+        } else if (obj2.texture && obj2.texture.key === 'ship') {
+            player = obj2;
+            bullet = obj1;
+        } else {
+            // Fallback: assume obj1 is bullet, obj2 is player (original assumption)
+            bullet = obj1;
+            player = obj2;
+        }
+        
+        // Additional validation to ensure we have the right objects
+        if (!bullet || !player) {
+            if (this.DEBUG) console.log("Invalid collision objects - bullet:", !!bullet, "player:", !!player);
+            return;
+        }
+        
+        // Ensure the bullet is actually an enemy bullet (should have 'enemy-bullet' texture)
+        if (bullet.texture && bullet.texture.key !== 'enemy-bullet') {
+            if (this.DEBUG) console.log("Collision object is not an enemy bullet, ignoring");
+            return;
+        }
+        
+        // Ensure the player is actually the player object
+        if (player !== this.player) {
+            if (this.DEBUG) console.log("Collision object is not the player, ignoring");
+            return;
+        }
+        
         // Skip if already hit or game over
         if (!bullet.active || !player.active || this.gameOver || this.playerInvincible) return;
         
-        if (this.DEBUG) console.log("Player hit! Before processing - Player active:", player.active, "visible:", player.visible, "alpha:", player.alpha);
+        if (this.DEBUG) console.log("Player hit! Before processing - Player active:", player.active, "visible:", player.visible, "alpha:", player.alpha, "Bullet texture:", bullet.texture?.key);
         
         // Deactivate the bullet first
         bullet.setActive(false);
@@ -762,13 +796,14 @@ class SinglePlayerStart extends Phaser.Scene {
         this.playerInvincible = true;
         
         // Store original methods and override them to prevent deactivation during invincibility
-        if (!player.originalSetActive) {
-            player.originalSetActive = player.setActive.bind(player);
-            player.originalSetVisible = player.setVisible.bind(player);
+        // Always use this.player to ensure we're modifying the correct object
+        if (!this.player.originalSetActive) {
+            this.player.originalSetActive = this.player.setActive.bind(this.player);
+            this.player.originalSetVisible = this.player.setVisible.bind(this.player);
         }
         
         // Override setActive to prevent deactivation during invincibility
-        player.setActive = function(value) {
+        this.player.setActive = function(value) {
             if (this.scene && this.scene.playerInvincible && !value) {
                 if (this.scene.DEBUG) console.log("Blocked attempt to deactivate player during invincibility");
                 return this; // Return this for chaining, but don't actually deactivate
@@ -777,7 +812,7 @@ class SinglePlayerStart extends Phaser.Scene {
         };
         
         // Override setVisible to prevent hiding during invincibility
-        player.setVisible = function(value) {
+        this.player.setVisible = function(value) {
             if (this.scene && this.scene.playerInvincible && !value) {
                 if (this.scene.DEBUG) console.log("Blocked attempt to hide player during invincibility");
                 return this; // Return this for chaining, but don't actually hide
@@ -789,7 +824,7 @@ class SinglePlayerStart extends Phaser.Scene {
         this.lives--;
         this.updateLivesDisplay();
         
-        if (this.DEBUG) console.log("Player hit! Lives remaining:", this.lives, "Player position:", player.x, player.y);
+        if (this.DEBUG) console.log("Player hit! Lives remaining:", this.lives, "Player position:", this.player.x, this.player.y);
         
         if (this.lives <= 0) {
             this.handleGameOver();
@@ -798,26 +833,26 @@ class SinglePlayerStart extends Phaser.Scene {
             this.clearEnemyBulletsNearPlayer();
             
             // Stop player movement temporarily
-            player.setVelocity(0, 0);
+            this.player.setVelocity(0, 0);
             
             // Force player to stay active and visible again (in case something changed it)
-            player.setActive(true);
-            player.setVisible(true);
+            this.player.setActive(true);
+            this.player.setVisible(true);
             
             // Kill any existing tweens on the player to prevent conflicts
-            this.tweens.killTweensOf(player);
+            this.tweens.killTweensOf(this.player);
             
-            if (this.DEBUG) console.log("Player state after setup - active:", player.active, "visible:", player.visible, "alpha:", player.alpha);
+            if (this.DEBUG) console.log("Player state after setup - active:", this.player.active, "visible:", this.player.visible, "alpha:", this.player.alpha);
             
             // Start a timer to continuously protect player during invincibility
             const protectionTimer = this.time.addEvent({
                 delay: 16, // Check every frame (roughly 60fps)
                 repeat: 62, // Run for about 1 second (1000ms / 16ms = 62.5)
                 callback: () => {
-                    if (player && this.playerInvincible) {
-                        if (!player.active || !player.visible) {
-                            player.setActive(true);
-                            player.setVisible(true);
+                    if (this.player && this.playerInvincible) {
+                        if (!this.player.active || !this.player.visible) {
+                            this.player.setActive(true);
+                            this.player.setVisible(true);
                             if (this.DEBUG) console.log("Timer protection: forced player active/visible");
                         }
                     }
@@ -826,42 +861,42 @@ class SinglePlayerStart extends Phaser.Scene {
 
             // Create blinking effect for invincibility (keep player in same spot)
             this.tweens.add({
-                targets: player,
+                targets: this.player,
                 alpha: 0.5, // Less transparent so player is still clearly visible
                 duration: 200,
                 yoyo: true,
                 repeat: 4, // Blink 5 times total
                 onUpdate: () => {
                     // Ensure player stays active and visible during the tween
-                    if (!player.active || !player.visible) {
+                    if (!this.player.active || !this.player.visible) {
                         if (this.DEBUG) console.log("Player became inactive/invisible during tween - fixing");
-                        player.setActive(true);
-                        player.setVisible(true);
+                        this.player.setActive(true);
+                        this.player.setVisible(true);
                     }
                 },
                 onComplete: () => {
-                    if (this.DEBUG) console.log("Tween complete - Player exists:", !!player, "active:", player?.active, "visible:", player?.visible);
+                    if (this.DEBUG) console.log("Tween complete - Player exists:", !!this.player, "active:", this.player?.active, "visible:", this.player?.visible);
                     
                     // Stop the protection timer
                     if (protectionTimer) {
                         protectionTimer.destroy();
                     }
                     
-                    if (player) {
-                        player.alpha = 1;
+                    if (this.player) {
+                        this.player.alpha = 1;
                         
                         // Restore original methods before ending invincibility
-                        if (player.originalSetActive) {
-                            player.setActive = player.originalSetActive;
-                            player.setVisible = player.originalSetVisible;
-                            delete player.originalSetActive;
-                            delete player.originalSetVisible;
+                        if (this.player.originalSetActive) {
+                            this.player.setActive = this.player.originalSetActive;
+                            this.player.setVisible = this.player.originalSetVisible;
+                            delete this.player.originalSetActive;
+                            delete this.player.originalSetVisible;
                         }
                         
-                        player.setActive(true);
-                        player.setVisible(true);
+                        this.player.setActive(true);
+                        this.player.setVisible(true);
                         this.playerInvincible = false;
-                        if (this.DEBUG) console.log("Player invincibility ended - alpha:", player.alpha, "visible:", player.visible, "active:", player.active);
+                        if (this.DEBUG) console.log("Player invincibility ended - alpha:", this.player.alpha, "visible:", this.player.visible, "active:", this.player.active);
                     } else {
                         if (this.DEBUG) console.log("Player missing after tween, triggering emergency recovery");
                         this.emergencyPlayerRecovery();
