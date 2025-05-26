@@ -84,7 +84,8 @@ class MobileControls {
         this.leftPressed = true;
         this.leftButton.setAlpha(1);
         this.leftButton.setTint(0x00ff00);
-      });
+      }
+    });
     
     this.leftButton.on('pointerup', (pointer) => {
       if (this.leftButtonPointerId === pointer.id) {
