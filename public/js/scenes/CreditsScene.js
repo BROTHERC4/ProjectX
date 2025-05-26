@@ -234,7 +234,6 @@ class CreditsScene extends Phaser.Scene {
       this.lastTouchY = pointer.y;
       this.touchStartTime = Date.now();
       this.touchVelocity = 0; // Reset velocity
-      console.log('[MOBILE CREDITS] Touch scroll started at:', pointer.y);
     });
     
     // Touch move event (dragging)
@@ -260,7 +259,6 @@ class CreditsScene extends Phaser.Scene {
     this.scrollZone.on('pointerup', (pointer) => {
       if (this.isTouching) {
         this.isTouching = false;
-        console.log('[MOBILE CREDITS] Touch scroll ended with velocity:', this.touchVelocity);
         
         // Apply inertia based on final velocity
         this.touchVelocity = Phaser.Math.Clamp(this.touchVelocity, -50, 50); // Cap velocity
@@ -271,11 +269,8 @@ class CreditsScene extends Phaser.Scene {
     this.scrollZone.on('pointerout', (pointer) => {
       if (this.isTouching) {
         this.isTouching = false;
-        console.log('[MOBILE CREDITS] Touch scroll cancelled (pointer out)');
       }
     });
-    
-    console.log('[MOBILE CREDITS] Mobile scrolling setup complete');
   }
   
   scrollCredits(deltaY) {

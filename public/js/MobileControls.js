@@ -84,9 +84,7 @@ class MobileControls {
         this.leftPressed = true;
         this.leftButton.setAlpha(1);
         this.leftButton.setTint(0x00ff00);
-        console.log('[MOBILE] Left button pressed by pointer:', pointer.id);
-      }
-    });
+      });
     
     this.leftButton.on('pointerup', (pointer) => {
       if (this.leftButtonPointerId === pointer.id) {
@@ -94,7 +92,6 @@ class MobileControls {
         this.leftPressed = false;
         this.leftButton.setAlpha(0.7);
         this.leftButton.clearTint();
-        console.log('[MOBILE] Left button released by pointer:', pointer.id);
       }
     });
     
@@ -115,7 +112,6 @@ class MobileControls {
         this.rightPressed = true;
         this.rightButton.setAlpha(1);
         this.rightButton.setTint(0x00ff00);
-        console.log('[MOBILE] Right button pressed by pointer:', pointer.id);
       }
     });
     
@@ -125,7 +121,6 @@ class MobileControls {
         this.rightPressed = false;
         this.rightButton.setAlpha(0.7);
         this.rightButton.clearTint();
-        console.log('[MOBILE] Right button released by pointer:', pointer.id);
       }
     });
     
@@ -158,8 +153,6 @@ class MobileControls {
       this.firePointerIds.add(pointer.id);
       this.firePressed = true;
       this.createFireEffect(pointer.x, pointer.y);
-      console.log('[MOBILE] Fire started by pointer:', pointer.id, 'at:', pointer.x, pointer.y);
-      console.log('[MOBILE] Current state - Left:', this.leftPressed, 'Right:', this.rightPressed, 'Fire:', this.firePressed);
     });
     
     this.fireZone.on('pointerup', (pointer) => {
@@ -169,7 +162,6 @@ class MobileControls {
         // Only stop firing if no other fingers are shooting
         if (this.firePointerIds.size === 0) {
           this.firePressed = false;
-          console.log('[MOBILE] Fire stopped - no more fire pointers');
         }
       }
     });
@@ -185,14 +177,12 @@ class MobileControls {
           this.firePointerIds.delete(pointer.id);
           if (this.firePointerIds.size === 0) {
             this.firePressed = false;
-            console.log('[MOBILE] Fire stopped - moved to button area');
           }
         }
       }
     });
     
     this.controlsVisible = true;
-    console.log('[MOBILE] Multi-touch mobile controls created and enabled');
   }
   
   createFireEffect(x, y) {
@@ -268,7 +258,6 @@ class MobileControls {
       this.scene.cameras.main.setFollowOffset(0, 100); // Offset to keep player visible above controls
       this.scene.cameras.main.setDeadzone(100, 100); // Deadzone before camera moves
       this.scene.cameras.main.setBounds(0, 0, 800, 600); // Keep camera within game bounds
-      console.log('[MOBILE] Camera follow enabled for mobile');
     }
   }
 }

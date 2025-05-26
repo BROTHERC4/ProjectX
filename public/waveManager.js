@@ -65,8 +65,6 @@ class WaveManager {
     const enemyCount = this.getEnemyCountForWave();
     const formation = this.getRandomFormation();
     
-    console.log(`[WAVE] Generating wave ${this.currentWave} with ${enemyCount} enemies in ${formation} formation`);
-    
     // Generate enemy types based on wave difficulty
     const enemyTypes = this.selectEnemyTypesForWave(enemyCount);
     
@@ -103,8 +101,6 @@ class WaveManager {
    */
   generateClassicWave1() {
     const enemies = [];
-    
-    console.log(`[WAVE] Generating classic Wave 1 layout`);
     
     // Wasp row (top row) - 8 wasps spawn at y=20, move to y=80
     for (let i = 0; i < 8; i++) {
@@ -200,8 +196,6 @@ class WaveManager {
   startNextWave() {
     this.waveTransition = true;
     this.currentWave++;
-    
-    console.log(`[WAVE] Starting wave ${this.currentWave}`);
     
     // Generate new enemies after a delay
     setTimeout(() => {

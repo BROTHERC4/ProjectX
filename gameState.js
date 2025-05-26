@@ -314,25 +314,25 @@ function updateGameState(roomId, io) {
   if (gameState.explosions && gameState.explosions.length > 0) {
     // SAFETY: Limit explosions to prevent spam
     if (gameState.explosions.length > 10) {
-      console.warn(`[SERVER WARNING] Too many explosions (${gameState.explosions.length})! Limiting to 10 most recent.`);
+      // console.warn(`[SERVER WARNING] Too many explosions (${gameState.explosions.length})! Limiting to 10 most recent.`);
       gameState.explosions = gameState.explosions.slice(-10); // Keep only last 10
     }
-    console.log(`[SERVER GAME STATE DEBUG] Sending ${gameState.explosions.length} explosions to clients in room ${roomId}:`, 
-      gameState.explosions.map(exp => ({id: exp.id, position: exp.position, type: exp.type})));
+    // console.log(`[SERVER GAME STATE DEBUG] Sending ${gameState.explosions.length} explosions to clients in room ${roomId}:`, 
+    //   gameState.explosions.map(exp => ({id: exp.id, position: exp.position, type: exp.type})));
   }
   io.to(roomId).emit('game_state', gameState);
   
   // CRITICAL FIX: Clean up explosions after sending to prevent infinite accumulation
   if (gameState.explosions && gameState.explosions.length > 0) {
-    console.log(`[SERVER CLEANUP DEBUG] Cleaning up ${gameState.explosions.length} explosions from server gameState`);
+    // console.log(`[SERVER CLEANUP DEBUG] Cleaning up ${gameState.explosions.length} explosions from server gameState`);
     gameState.explosions = []; // Clear all explosions after sending
   }
   
   // If game is over, set timeout to end the game after 5 seconds
   if (gameState.gameOver) {
-    console.log(`[SERVER] Game over detected, starting 5 second countdown for room ${roomId}`);
+    // console.log(`[SERVER] Game over detected, starting 5 second countdown for room ${roomId}`);
     setTimeout(() => {
-      console.log(`[SERVER] Ending game and sending final results for room ${roomId}`);
+      // console.log(`[SERVER] Ending game and sending final results for room ${roomId}`);
       endGameInRoom(roomId);
       io.to(roomId).emit('game_ended', {
         winner: gameState.winner,
@@ -435,7 +435,7 @@ function updateEnemies(gameState, deltaTime) {
   gameState.enemies = gameState.enemies.filter(enemy => {
     // Remove enemies that have somehow gotten too far off screen
     if (enemy.position.y > 700 || (enemy.position.y < -200 && enemy.formationReached)) {
-      console.log('[SERVER] Removing stuck enemy at:', enemy.position.x, enemy.position.y);
+      // console.log('[SERVER] Removing stuck enemy at:', enemy.position.x, enemy.position.y);
       return false;
     }
     return true;
@@ -587,7 +587,7 @@ function checkCollisions(gameState, room, io) {
         if (barrier.durability <= 0) {
           gameState.barriers = gameState.barriers.filter(b => b.id !== barrier.id);
           // Create barrier destruction effect
-          console.log(`[SERVER BARRIER DEBUG] Creating barrier explosion at (${barrier.position.x}, ${barrier.position.y}), barrier ID: ${barrier.id}`);
+          // console.log(`[SERVER BARRIER DEBUG] Creating barrier explosion at (${barrier.position.x}, ${barrier.position.y}), barrier ID: ${barrier.id}`);
           gameState.explosions = gameState.explosions || [];
           gameState.explosions.push({
             id: `explosion-${Date.now()}`,
@@ -595,7 +595,7 @@ function checkCollisions(gameState, room, io) {
             type: 'barrier',
             timeLeft: 500
           });
-          console.log(`[SERVER BARRIER DEBUG] Barrier explosion added to gameState, total explosions: ${gameState.explosions.length}`);
+          // console.log(`[SERVER BARRIER DEBUG] Barrier explosion added to gameState, total explosions: ${gameState.explosions.length}`);
         }
       }
     });
@@ -622,7 +622,7 @@ function checkCollisions(gameState, room, io) {
         if (barrier.durability <= 0) {
           gameState.barriers = gameState.barriers.filter(b => b.id !== barrier.id);
           // Create barrier destruction effect
-          console.log(`[SERVER BARRIER DEBUG] Creating barrier explosion at (${barrier.position.x}, ${barrier.position.y}), barrier ID: ${barrier.id}`);
+          // console.log(`[SERVER BARRIER DEBUG] Creating barrier explosion at (${barrier.position.x}, ${barrier.position.y}), barrier ID: ${barrier.id}`);
           gameState.explosions = gameState.explosions || [];
           gameState.explosions.push({
             id: `explosion-${Date.now()}`,
@@ -630,7 +630,7 @@ function checkCollisions(gameState, room, io) {
             type: 'barrier',
             timeLeft: 500
           });
-          console.log(`[SERVER BARRIER DEBUG] Barrier explosion added to gameState, total explosions: ${gameState.explosions.length}`);
+          // console.log(`[SERVER BARRIER DEBUG] Barrier explosion added to gameState, total explosions: ${gameState.explosions.length}`);
         }
       }
     });
@@ -683,7 +683,7 @@ function checkCollisions(gameState, room, io) {
           // Create explosion effect only for on-screen positions
           if (enemy.position.x >= -50 && enemy.position.x <= 850 && 
               enemy.position.y >= -50 && enemy.position.y <= 650) {
-            console.log(`[SERVER EXPLOSION DEBUG] Creating explosion for enemy at (${enemy.position.x}, ${enemy.position.y}), enemy type: ${enemy.type}, enemy ID: ${enemy.id}`);
+            // console.log(`[SERVER EXPLOSION DEBUG] Creating explosion for enemy at (${enemy.position.x}, ${enemy.position.y}), enemy type: ${enemy.type}, enemy ID: ${enemy.id}`);
             gameState.explosions = gameState.explosions || [];
             gameState.explosions.push({
               id: `explosion-${Date.now()}`,
@@ -691,9 +691,9 @@ function checkCollisions(gameState, room, io) {
               type: 'enemy',
               timeLeft: 500
             });
-            console.log(`[SERVER EXPLOSION DEBUG] Explosion added to gameState, total explosions: ${gameState.explosions.length}`);
+            // console.log(`[SERVER EXPLOSION DEBUG] Explosion added to gameState, total explosions: ${gameState.explosions.length}`);
           } else {
-            console.log(`[SERVER EXPLOSION DEBUG] Blocking off-screen explosion for enemy at (${enemy.position.x}, ${enemy.position.y})`);
+            // console.log(`[SERVER EXPLOSION DEBUG] Blocking off-screen explosion for enemy at (${enemy.position.x}, ${enemy.position.y})`);
           }
           
           // Remove enemy
@@ -739,7 +739,7 @@ function checkCollisions(gameState, room, io) {
         
         // Make player invincible
         player.invincible = true;
-        console.log(`[SERVER] Player ${player.id} is now invincible`);
+        // console.log(`[SERVER] Player ${player.id} is now invincible`);
         
         // Store player ID and room ID for reliable reference in the timeout
         const playerId = player.id;
@@ -750,16 +750,16 @@ function checkCollisions(gameState, room, io) {
           try {
             const currentRoom = getRoomData(roomId);
             if (!currentRoom || !currentRoom.gameState) {
-              console.log(`[SERVER] Couldn't find room ${roomId} to reset invincibility for player ${playerId}`);
+              // console.log(`[SERVER] Couldn't find room ${roomId} to reset invincibility for player ${playerId}`);
               return;
             }
             const updatedPlayer = currentRoom.gameState.players.find(p => p.id === playerId);
             if (updatedPlayer) {
               updatedPlayer.invincible = false;
-              console.log(`[SERVER] Player ${playerId} invincibility reset to false`);
+              // console.log(`[SERVER] Player ${playerId} invincibility reset to false`);
               if (io) io.to(roomId).emit('game_state', currentRoom.gameState);
             } else {
-              console.log(`[SERVER] Couldn't find player ${playerId} in room ${roomId} to reset invincibility`);
+              // console.log(`[SERVER] Couldn't find player ${playerId} in room ${roomId} to reset invincibility`);
             }
           } catch (error) {
             console.error(`[SERVER] Error resetting invincibility for player ${playerId}:`, error);
@@ -818,7 +818,7 @@ function checkGameEnd(gameState, room, roomId, io) {
   // Check if all players are out of lives
   const allPlayersDead = gameState.players.every(player => player.lives <= 0);
   if (allPlayersDead) {
-    console.log(`[SERVER] All players dead in room ${roomId}, ending game`);
+    // console.log(`[SERVER] All players dead in room ${roomId}, ending game`);
     gameState.gameOver = true;
     gameState.winner = 'enemies';
     return;

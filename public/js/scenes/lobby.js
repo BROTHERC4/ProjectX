@@ -111,7 +111,8 @@ class LobbyScene extends Phaser.Scene {
 
     // Force an initial update with current players
     if (window.socketClient.players && window.socketClient.players.length > 0) {
-      console.log("Initializing player list with existing players:", window.socketClient.players);
+      // Comment out all console.log statements.
+      // console.log("Initializing player list with existing players:", window.socketClient.players);
       this.updatePlayerList(window.socketClient.players);
     }
   }
@@ -198,7 +199,7 @@ class LobbyScene extends Phaser.Scene {
       }
     });
     // Log for debugging
-    console.log(`Updated player list with ${players.length} players`);
+    // console.log(`Updated player list with ${players.length} players`);
   }
   
   toggleReady() {

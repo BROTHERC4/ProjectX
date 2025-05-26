@@ -336,17 +336,17 @@ class Start extends Phaser.Scene {
       
       // CHECK FOR GAME OVER - this was missing!
       if (gameState.gameOver) {
-        console.log('[CLIENT] Game over detected in game_state');
+        // console.log('[CLIENT] Game over detected in game_state');
         this.handleGameOver(gameState);
         return;
       }
       
       // Debug log explosions being received from server
       if (gameState.explosions && gameState.explosions.length > 0) {
-        console.log(`[CLIENT DEBUG] Received ${gameState.explosions.length} explosions from server`);
+        // console.log(`[CLIENT DEBUG] Received ${gameState.explosions.length} explosions from server`);
         // SAFETY: If too many explosions, something's wrong
         if (gameState.explosions.length > 20) {
-          console.error(`[CLIENT ERROR] Received too many explosions (${gameState.explosions.length})! This indicates a server bug.`);
+          // console.error(`[CLIENT ERROR] Received too many explosions (${gameState.explosions.length})! This indicates a server bug.`);
           return; // Skip processing to prevent particle spam
         }
       }
@@ -387,7 +387,7 @@ class Start extends Phaser.Scene {
     });
 
     this.socket.on('wave_started', (data) => {
-      console.log(`[CLIENT] Wave ${data.waveNumber} started with ${data.enemyCount} enemies`);
+      // console.log(`[CLIENT] Wave ${data.waveNumber} started with ${data.enemyCount} enemies`);
     });
 
     // Game over event
@@ -397,13 +397,13 @@ class Start extends Phaser.Scene {
 
     // Handle final results - FIX: listen for 'game_ended' instead of 'final_results'
     this.socket.on('game_ended', (data) => {
-      console.log('[CLIENT] Received game_ended event:', data);
+      // console.log('[CLIENT] Received game_ended event:', data);
       this.showFinalResults(data);
     });
 
     // Handle player disconnections
     this.socket.on('player_left', (data) => {
-      console.log(`Player ${data.playerId} left the game`);
+      // console.log(`Player ${data.playerId} left the game`);
     });
   }
   
@@ -472,7 +472,7 @@ class Start extends Phaser.Scene {
       
       // Debug log position updates only when needed
       if (this.DEBUG) {
-        console.log(`[CLIENT] Player ${serverPlayer.id} pos:`, serverPlayer.position);
+        // console.log(`[CLIENT] Player ${serverPlayer.id} pos:`, serverPlayer.position);
       }
       
       // Update visibility based on player invincibility state
@@ -480,7 +480,7 @@ class Start extends Phaser.Scene {
         // If the player just became invincible, start blinking animation
         if (!playerSprite.isInvincible) {
           playerSprite.isInvincible = true;
-          console.log(`[CLIENT] Player ${serverPlayer.id} became invincible`);
+          // console.log(`[CLIENT] Player ${serverPlayer.id} became invincible`);
           // First, make sure any existing tweens are properly stopped
           this.tweens.killTweensOf(playerSprite);
           // Create blinking effect for invincibility - IMPROVED
@@ -496,7 +496,7 @@ class Start extends Phaser.Scene {
       } else {
         // If player was invincible but no longer is, restore full opacity
         if (playerSprite.isInvincible) {
-          console.log(`[CLIENT] Player ${serverPlayer.id} is no longer invincible, restoring opacity`);
+          // console.log(`[CLIENT] Player ${serverPlayer.id} is no longer invincible, restoring opacity`);
           playerSprite.isInvincible = false;
           
           // Kill ALL tweens on this sprite
@@ -655,7 +655,7 @@ class Start extends Phaser.Scene {
     existingEnemies.forEach(enemy => {
       if (!serverEnemies.some(e => e.id === enemy.enemyId)) {
         // Don't create explosion here - server handles explosions via handleExplosions()
-        console.log(`[MULTIPLAYER DEBUG] Removing enemy ${enemy.enemyId} at position (${enemy.x}, ${enemy.y}) - server no longer has this enemy`);
+        // console.log(`[MULTIPLAYER DEBUG] Removing enemy ${enemy.enemyId} at position (${enemy.x}, ${enemy.y}) - server no longer has this enemy`);
         // this.createExplosion(enemy.x, enemy.y);
         enemy.destroy();
       }
@@ -697,7 +697,7 @@ class Start extends Phaser.Scene {
 
     // Log when input changes
     if (input.left !== prevInput.left || input.right !== prevInput.right || input.fire !== prevInput.fire) {
-      console.log('[INPUT] Keys pressed:', input);
+      // console.log('[INPUT] Keys pressed:', input);
     }
     
     // Save current input for next frame
@@ -752,7 +752,7 @@ class Start extends Phaser.Scene {
   showFinalResults(data) {
     // This method can be used to show more detailed results
     // when the server sends the final game_ended event
-    console.log('Game ended with results:', data);
+    // console.log('Game ended with results:', data);
   }
   
   handleHitEffects(hitEffects) {
@@ -801,12 +801,12 @@ class Start extends Phaser.Scene {
   }
   
   handleExplosions(explosions) {
-    console.log(`[MULTIPLAYER DEBUG] Processing ${explosions.length} explosions`);
+    // console.log(`[MULTIPLAYER DEBUG] Processing ${explosions.length} explosions`);
     
     explosions.forEach(explosion => {
       // Only create explosions we haven't seen before
       if (!this.processedExplosions || !this.processedExplosions.includes(explosion.id)) {
-        console.log(`[MULTIPLAYER DEBUG] New explosion: (${explosion.position.x}, ${explosion.position.y}) type: ${explosion.type || 'enemy'}`);
+        // console.log(`[MULTIPLAYER DEBUG] New explosion: (${explosion.position.x}, ${explosion.position.y}) type: ${explosion.type || 'enemy'}`);
         this.createExplosion(explosion.position.x, explosion.position.y, explosion.type);
         
         // Track processed explosions
@@ -817,7 +817,7 @@ class Start extends Phaser.Scene {
     
     // Clean up old explosion IDs
     if (this.processedExplosions && this.processedExplosions.length > 100) {
-      console.log(`[MULTIPLAYER DEBUG] Cleaning up old explosion IDs, count: ${this.processedExplosions.length}`);
+      // console.log(`[MULTIPLAYER DEBUG] Cleaning up old explosion IDs, count: ${this.processedExplosions.length}`);
       this.processedExplosions = this.processedExplosions.slice(-50);
     }
   }

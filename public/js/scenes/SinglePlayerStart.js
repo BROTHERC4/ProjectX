@@ -179,7 +179,7 @@ class SinglePlayerStart extends Phaser.Scene {
             loop: true,
             callback: () => {
                 if (this.player && this.player.active) {
-                    console.log(`Player position: x=${this.player.x}, y=${this.player.y}`);
+                    // console.log(`Player position: x=${this.player.x}, y=${this.player.y}`);
                 }
             }
         });

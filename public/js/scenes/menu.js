@@ -141,7 +141,7 @@ class MenuScene extends Phaser.Scene {
   setupSocketHandlers() {
     // When a room is created, move to the lobby
     window.socketClient.onRoomCreated = (data) => {
-      console.log('Room created, moving to lobby');
+      // console.log('Room created, moving to lobby');
       this.scene.start('LobbyScene', { 
         roomId: data.roomId,
         playerId: data.playerId,
@@ -151,7 +151,7 @@ class MenuScene extends Phaser.Scene {
     
     // When joining a room is successful
     window.socketClient.onRoomJoined = (data) => {
-      console.log('Room joined, moving to lobby');
+      // console.log('Room joined, moving to lobby');
       this.scene.start('LobbyScene', { 
         roomId: data.roomId,
         playerId: data.playerId,
